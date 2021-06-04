@@ -26,7 +26,7 @@ Add any required modules to CoreDNS code as prompted.
 
 In the Corefile, `mysql` can be configured with the following parameters:
 
-`dsn` DSN for MySQL as per https://github.com/go-sql-driver/mysql examples.
+`dsn` DSN for MySQL as per https://github.com/go-sql-driver/mysql examples. You can use `$ENV_NAME` format in the DSN, and it will be replaced with the environment variable value.
 `table_prefix` Prefix for the MySQL tables. Defaults to `coredns_`.
 `max_lifetime` Duration (in Golang format) for a SQL connection. Default is 1 minute.
 `max_open_connections` Maximum number of open connections to the database server. Default is 10.

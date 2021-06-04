@@ -2,6 +2,7 @@ package coredns_mysql
 
 import (
 	"database/sql"
+	"os"
 	"strconv"
 	"time"
 
@@ -129,7 +130,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 }
 
 func (handler *CoreDNSMySql) db() (*sql.DB, error) {
-	db, err := sql.Open("mysql", handler.Dsn)
+	db, err := sql.Open("mysql", os.ExpandEnv(handler.Dsn))
 	if err != nil {
 		return nil, err
 	}
