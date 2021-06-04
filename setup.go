@@ -12,10 +12,11 @@ import (
 )
 
 const (
-	defaultTtl = 360
-	defaultMaxLifeTime = 1*time.Minute
+	defaultTtl                = 360
+	defaultMaxLifeTime        = 1 * time.Minute
 	defaultMaxOpenConnections = 10
 	defaultMaxIdleConnections = 10
+	defaultZoneUpdateTime     = 10 * time.Minute
 )
 
 func init() {
@@ -90,6 +91,16 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 					val = defaultMaxIdleConnections
 				}
 				mysql.MaxIdleConnections = val
+			case "zone_update_interval":
+				if !c.NextArg() {
+					return &CoreDNSMySql{}, c.ArgErr()
+				}
+				var val time.Duration
+				val, err = time.ParseDuration(c.Val())
+				if err != nil {
+					val = defaultZoneUpdateTime
+				}
+				mysql.zoneUpdateTime = val
 			case "ttl":
 				if !c.NextArg() {
 					return &CoreDNSMySql{}, c.ArgErr()

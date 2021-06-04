@@ -12,18 +12,18 @@ type Record struct {
 	Zone       string
 	Name       string
 	RecordType string
-	Ttl uint32
-	Content string
+	Ttl        uint32
+	Content    string
 
 	handler *CoreDNSMySql
 }
 
 type ARecord struct {
-	Ip  net.IP `json:"ip"`
+	Ip net.IP `json:"ip"`
 }
 
 type AAAARecord struct {
-	Ip  net.IP `json:"ip"`
+	Ip net.IP `json:"ip"`
 }
 
 type TXTRecord struct {
@@ -60,7 +60,7 @@ type SOARecord struct {
 }
 
 type CAARecord struct {
-	Flag  uint8 `json:"flag"`
+	Flag  uint8  `json:"flag"`
 	Tag   string `json:"tag"`
 	Value string `json:"value"`
 }
@@ -80,7 +80,7 @@ func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if aRec.Ip == nil {
-		return nil, nil,nil
+		return nil, nil, nil
 	}
 	r.A = aRec.Ip
 	return r, nil, nil
@@ -97,7 +97,7 @@ func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
 	var aRec *AAAARecord
 	err = json.Unmarshal([]byte(rec.Content), &aRec)
 	if err != nil {
-		return nil,nil, err
+		return nil, nil, err
 	}
 
 	if aRec.Ip == nil {
@@ -123,7 +123,7 @@ func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(aRec.Text) == 0 {
-		return nil, nil,nil
+		return nil, nil, nil
 	}
 
 	r.Txt = split255(aRec.Text)
@@ -145,7 +145,7 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(aRec.Host) == 0 {
-		return nil, nil,nil
+		return nil, nil, nil
 	}
 	r.Target = dns.Fqdn(aRec.Host)
 	return r, nil, nil
@@ -166,7 +166,7 @@ func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(aRec.Host) == 0 {
-		return nil, nil,nil
+		return nil, nil, nil
 	}
 
 	r.Ns = aRec.Host
@@ -192,7 +192,7 @@ func (rec *Record) AsMXRecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(aRec.Host) == 0 {
-		return nil, nil,nil
+		return nil, nil, nil
 	}
 
 	r.Mx = aRec.Host
@@ -220,7 +220,7 @@ func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(aRec.Target) == 0 {
-		return nil, nil,nil
+		return nil, nil, nil
 	}
 
 	r.Target = aRec.Target
@@ -240,10 +240,10 @@ func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
 
 	if aRec.Ns == "" {
 		r.Hdr = dns.RR_Header{
-			Name: dns.Fqdn(rec.fqdn()),
+			Name:   dns.Fqdn(rec.fqdn()),
 			Rrtype: dns.TypeSOA,
-			Class: dns.ClassINET,
-			Ttl: rec.minTtl(),
+			Class:  dns.ClassINET,
+			Ttl:    rec.minTtl(),
 		}
 		r.Ns = "ns1." + rec.Name
 		r.Mbox = "hostmaster." + rec.Name
@@ -253,10 +253,10 @@ func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
 		r.Minttl = rec.minTtl()
 	} else {
 		r.Hdr = dns.RR_Header{
-			Name: dns.Fqdn(rec.Zone),
+			Name:   dns.Fqdn(rec.Zone),
 			Rrtype: dns.TypeSOA,
-			Class: dns.ClassINET,
-			Ttl: rec.minTtl(),
+			Class:  dns.ClassINET,
+			Ttl:    rec.minTtl(),
 		}
 		r.Ns = aRec.Ns
 		r.Mbox = aRec.MBox
@@ -284,8 +284,8 @@ func (rec *Record) AsCAARecord() (record dns.RR, extras []dns.RR, err error) {
 		return nil, nil, err
 	}
 
-	if aRec.Value == "" || aRec.Tag == ""{
-		return nil, nil,nil
+	if aRec.Value == "" || aRec.Tag == "" {
+		return nil, nil, nil
 	}
 
 	r.Flag = aRec.Flag

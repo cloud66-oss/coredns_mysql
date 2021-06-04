@@ -11,18 +11,18 @@ import (
 )
 
 type CoreDNSMySql struct {
-	Next           plugin.Handler
-	Dsn string
-	TablePrefix string
-	MaxLifetime time.Duration
+	Next               plugin.Handler
+	Dsn                string
+	TablePrefix        string
+	MaxLifetime        time.Duration
 	MaxOpenConnections int
 	MaxIdleConnections int
-	Ttl            uint32
+	Ttl                uint32
 
-	tableName string
+	tableName      string
 	lastZoneUpdate time.Time
 	zoneUpdateTime time.Duration
-	zones []string
+	zones          []string
 }
 
 // ServeDNS implements the plugin.Handler interface.
@@ -52,9 +52,9 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if len(records) == 0 {
 		// no record found but we are going to return a SOA
 		rec := &Record{
-			Name: qName,
+			Name:       qName,
 			RecordType: "SOA",
-			Content: "{}",
+			Content:    "{}",
 		}
 		records = append(records, rec)
 	}

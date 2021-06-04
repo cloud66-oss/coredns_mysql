@@ -32,6 +32,7 @@ In the Corefile, `mysql` can be configured with the following parameters:
 `max_open_connections` Maximum number of open connections to the database server. Default is 10.
 `max_idle_connections` Maximum number of idle connections in the database connection pool. Default is 10.
 `ttl` Default TTL for records without a specified TTL in seconds. Default is 360 (seconds)
+`zone_update_interval` Maximum time interval between loading all the zones from the database. Default is 10 minutes.
 
 ## Database Setup
 This plugin doesn't create or migrate database schema for its use yet. To create the database and tables, use the following table structure (note the table name prefix):
