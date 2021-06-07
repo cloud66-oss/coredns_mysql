@@ -3,7 +3,7 @@
 MySQL backend for CoreDNS
 
 ## Name
-MySQL - MySQL backend for CoreDNS
+mysql - MySQL backend for CoreDNS
 
 ## Description
 
