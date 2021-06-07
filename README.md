@@ -30,7 +30,7 @@ mysql {
 - `ttl` Default TTL for records without a specified TTL in seconds. Default is 360 (seconds)
 - `zone_update_interval` Maximum time interval between loading all the zones from the database. Default is 10 minutes.
 
-##3 Supported Record Types
+## Supported Record Types
 
 A, AAAA, CNAME, SOA, TXT, NS, MX, CAA and SRV. This backend doesn't support AXFR requests. It also doesn't support wildcard records yet.
 
