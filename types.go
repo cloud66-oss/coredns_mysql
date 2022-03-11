@@ -327,5 +327,8 @@ func split255(s string) []string {
 }
 
 func (rec *Record) fqdn() string {
+	if rec.Name == "" {
+		return rec.Zone
+	}
 	return rec.Name + "." + rec.Zone
 }
