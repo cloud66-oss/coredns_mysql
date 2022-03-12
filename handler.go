@@ -49,14 +49,15 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
 
+	var appendSOA bool
 	if len(records) == 0 {
+		appendSOA = true
 		// no record found but we are going to return a SOA
-		rec := &Record{
-			Name:       qName,
-			RecordType: "SOA",
-			Content:    "{}",
+		recs, err := handler.findRecord(qZone, "", "SOA")
+		if err != nil {
+			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
-		records = append(records, rec)
+		records = append(records, recs...)
 	}
 
 	if qType == "AXFR" {
@@ -105,7 +106,11 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	m.RecursionAvailable = false
 	m.Compress = true
 
-	m.Answer = append(m.Answer, answers...)
+	if !appendSOA {
+		m.Answer = append(m.Answer, answers...)
+	} else {
+		m.Ns = append(m.Ns, answers...)
+	}
 	m.Extra = append(m.Extra, extras...)
 
 	state.SizeAndDo(m)
