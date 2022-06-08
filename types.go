@@ -159,7 +159,7 @@ func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *CNAMERecord
+	var aRec *NSRecord
 	err = json.Unmarshal([]byte(rec.Content), &aRec)
 	if err != nil {
 		return nil, nil, err
