@@ -32,7 +32,7 @@ mysql {
 
 ## Supported Record Types
 
-A, AAAA, CNAME, SOA, TXT, NS, MX, CAA and SRV. This backend doesn't support AXFR requests. It also doesn't support wildcard records yet.
+A, AAAA, CNAME, SOA, TXT, NS, MX, CAA and SRV.  Wildcard records are supported as well.  This backend doesn't support AXFR requests.
 
 ## Setup (as an external plugin)
 
