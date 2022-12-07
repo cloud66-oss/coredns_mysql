@@ -59,19 +59,25 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 
 // findWildcardRecords attempts to find wildcard records
 // recursively until it finds matching records.
-// e.g. zone: example.com
-// x.y.z.example.com -> *.y.z.example.com -> *.z.example.com -> *.example.com
+// e.g. x.y.z -> *.y.z -> *.z -> *
 func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types ...string) ([]*Record, error) {
-	const dot = "."
+	const (
+		wildcard       = "*"
+		wildcardPrefix = wildcard + "."
+	)
 
-	subNames := strings.Split(name, dot)
-	nextSubNames := subNames[1:]
-	if subNames[0] == "*" {
-		nextSubNames = subNames[2:]
+	if name == wildcard {
+		return nil, nil
 	}
 
-	names := append([]string{"*"}, nextSubNames...)
-	target := strings.Join(names, dot)
+	name = strings.TrimPrefix(name, wildcardPrefix)
+
+	target := wildcard
+	i, shot := dns.NextLabel(name, 0)
+	if !shot {
+		target = wildcardPrefix + name[i:]
+	}
+
 	return handler.findRecord(zone, target, types...)
 }
 
