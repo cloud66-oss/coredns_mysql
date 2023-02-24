@@ -60,6 +60,14 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		records = append(records, recs...)
 	}
 
+    if qType == "SOA" {
+		recsNs, err := handler.findRecord(qZone, qName, "NS")
+		if err != nil {
+			return handler.errorResponse(state, dns.RcodeServerFailure, err)
+		}
+		records = append(records, recsNs...)
+	}
+
 	if qType == "AXFR" {
 		return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
 	}
