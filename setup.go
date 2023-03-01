@@ -143,7 +143,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 	}
 	defer db.Close()
 
-	mysql.tableName = mysql.TablePrefix + "records"
+	mysql.tableName = mysql.TablePrefix
 
 	return &mysql, nil
 }
