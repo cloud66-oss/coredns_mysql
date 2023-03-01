@@ -13,7 +13,7 @@ import (
 
 const (
 	defaultTtl                = 360
-	defaultMaxLifeTime        = 1 * time.Minute
+	defaultMaxLifeTime        = 60 * 24 * time.Minute
 	defaultMaxOpenConnections = 10
 	defaultMaxIdleConnections = 10
 	defaultZoneUpdateTime     = 10 * time.Minute
