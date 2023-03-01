@@ -19,6 +19,8 @@ const (
 	defaultZoneUpdateTime     = 10 * time.Minute
 )
 
+var globalDB *sql.DB
+
 func init() {
 	caddy.RegisterPlugin("mysql", caddy.Plugin{
 		ServerType: "dns",
@@ -31,6 +33,7 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return plugin.Error("mysql", err)
 	}
+	initGlobalDB(r)
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		r.Next = next
@@ -38,6 +41,11 @@ func setup(c *caddy.Controller) error {
 	})
 
 	return nil
+}
+
+func initGlobalDB(c *CoreDNSMySql) {
+	globalDB, _ = c.db()
+	return
 }
 
 func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {

@@ -9,11 +9,12 @@ import (
 )
 
 func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...string) ([]*Record, error) {
-	db, err := handler.db()
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
+	// db, err := handler.db()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer db.Close()
+	db := globalDB
 
 	var query string
 	if name != zone {
