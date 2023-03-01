@@ -83,11 +83,12 @@ func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types
 }
 
 func (handler *CoreDNSMySql) loadZones() error {
-	db, err := handler.db()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
+// 	db, err := handler.db()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer db.Close()
+	db := globalDB
 
 	result, err := db.Query("SELECT DISTINCT zone FROM " + handler.tableName)
 	if err != nil {
