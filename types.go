@@ -24,9 +24,9 @@ type Record struct {
 	Data string
 	TTL  uint32
 
-	Priority uint32
-	Weight   uint32
-	Port     uint32
+	Priority uint16
+	Weight   uint16
+	Port     uint16
 	Target   string
 	Flag     uint8
 	Tag      string
@@ -100,10 +100,10 @@ func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
 		Ttl:    rec.minTtl(),
 	}
 
-	if rec.Data == nil {
+	if rec.Data == "" {
 		return nil, nil, nil
 	}
-	r.A = rec.Data
+	r.A = net.IP(rec.Data)
 	return r, nil, nil
 }
 
@@ -116,10 +116,10 @@ func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
 		Ttl:    rec.minTtl(),
 	}
 
-	if rec.Data == nil {
+	if rec.Data == "" {
 		return nil, nil, nil
 	}
-	r.AAAA = rec.Data
+	r.AAAA = net.IP(rec.Data)
 	return r, nil, nil
 }
 

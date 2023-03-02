@@ -155,7 +155,7 @@ func (handler *CoreDNSMySql) hosts(zone string, name string) ([]dns.RR, error) {
 	answers := make([]dns.RR, 0)
 
 	for _, rec := range recs {
-		switch rec.RecordType {
+		switch rec.Type {
 		case "A":
 			aRec, _, err := rec.AsARecord()
 			if err != nil {
