@@ -71,8 +71,8 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 	fmt.Println("5----------------")
 
-	answers := make([]dns.RR, 0, 10)
-	extras := make([]dns.RR, 0, 10)
+	answers := make([]dns.RR, 0)
+	extras := make([]dns.RR, 0)
 
 	for _, record := range records {
 		var answer dns.RR
@@ -125,7 +125,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	state.SizeAndDo(m)
 	m = state.Scrub(m)
 	err = w.WriteMsg(m)
-	fmt.Println(err)
+	fmt.Println(err.Error(), err)
 	fmt.Println("8----------------")
 	return dns.RcodeSuccess, nil
 }
