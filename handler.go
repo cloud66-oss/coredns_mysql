@@ -2,7 +2,6 @@ package coredns_mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -41,10 +40,8 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		}
 	}
 
+	// TODO 此处可能有性能瓶颈，如果域很多的话，则需要遍历很多次，有不同的域就要遍历一次. 如果域很多，可以考虑采用hash表进行优化
 	qZone := plugin.Zones(handler.zones).Matches(qName)
-	fmt.Println("----------------")
-	fmt.Println(qName)
-	fmt.Println("----------------")
 	if qZone == "" {
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
@@ -58,7 +55,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if len(records) == 0 {
 		appendSOA = true
 		// no record found but we are going to return a SOA
-		recs, err := handler.findRecord(qZone, "", "SOA")
+		recs, err := handler.findRecord(qZone, "@", "SOA")
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
@@ -74,7 +71,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	for _, record := range records {
 		var answer dns.RR
-		switch record.RecordType {
+		switch record.Type {
 		case "A":
 			answer, extras, err = record.AsARecord()
 		case "AAAA":
