@@ -20,7 +20,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 	//	strings.Join(types, "','"))
 
 	sqlQuery := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
-		"priority, weight, port, target, flag, tag"+
+		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 		"remark"+
 		"FROM %s "+
