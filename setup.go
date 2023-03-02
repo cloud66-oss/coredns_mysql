@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	defaultTableName          = "coredns_records"
 	defaultTtl                = 360
 	defaultMaxLifeTime        = 60 * 24 * time.Minute
 	defaultMaxOpenConnections = 10
@@ -49,9 +50,13 @@ func initGlobalDB(c *CoreDNSMySql) {
 }
 
 func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
+	// Use default get a core dns mysql obj
 	mysql := CoreDNSMySql{
-		TablePrefix: "coredns_",
-		Ttl:         300,
+		TableName:          defaultTableName,
+		MaxLifetime:        defaultMaxLifeTime,
+		MaxOpenConnections: defaultMaxOpenConnections,
+		MaxIdleConnections: defaultMaxIdleConnections,
+		Ttl:                defaultTtl,
 	}
 	var err error
 
@@ -64,11 +69,11 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 					return &CoreDNSMySql{}, c.ArgErr()
 				}
 				mysql.Dsn = c.Val()
-			case "table_prefix":
+			case "table_name":
 				if !c.NextArg() {
 					return &CoreDNSMySql{}, c.ArgErr()
 				}
-				mysql.TablePrefix = c.Val()
+				mysql.TableName = c.Val()
 			case "max_lifetime":
 				if !c.NextArg() {
 					return &CoreDNSMySql{}, c.ArgErr()
@@ -132,23 +137,21 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 
 	}
 
-	db, err := mysql.db()
+	dbConn, err := mysql.getDBConn()
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
+	err = dbConn.Ping()
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
-
-	mysql.tableName = mysql.TablePrefix
+	mysql.dbConn = dbConn
 
 	return &mysql, nil
 }
 
-func (handler *CoreDNSMySql) db() (*sql.DB, error) {
+func (handler *CoreDNSMySql) getDBConn() (*sql.DB, error) {
 	db, err := sql.Open("mysql", os.ExpandEnv(handler.Dsn))
 	if err != nil {
 		return nil, err
