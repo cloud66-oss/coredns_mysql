@@ -23,7 +23,7 @@ mysql {
 ```
 
 - `dsn` DSN for MySQL as per https://github.com/go-sql-driver/mysql examples. You can use `$ENV_NAME` format in the DSN, and it will be replaced with the environment variable value.
-- `table_name` Prefix for the MySQL tables. Defaults to `coredns_records`.
+- `table_name` MySQL table name. Defaults to `coredns_records`.
 - `max_lifetime` Duration (in Golang format) for a SQL connection. Default is 24 hours.
 - `max_open_connections` Maximum number of open connections to the database server. Default is 10.
 - `max_idle_connections` Maximum number of idle connections in the database connection pool. Default is 10.
@@ -39,7 +39,7 @@ A, AAAA, CNAME, SOA, TXT, NS, MX, CAA and SRV.  Wildcard records are supported a
 Add this as an external plugin in `plugin.cfg` file: 
 
 ```
-mysql:github.com/cloud66-oss/coredns_mysql
+mysql:github.com/snail2sky/coredns_mysql
 ```
 
 then run
@@ -88,9 +88,9 @@ $ dig A MX foo.example.org
 This plugin, is inspired by https://github.com/wenerme/coredns-pdsql and https://github.com/arvancloud/redis
 
 ### Development 
-To develop this plugin further, make sure you can compile CoreDNS locally and get this repo (`go get github.com/cloud66-oss/coredns_mysql`). You can switch the CoreDNS mod file to look for the plugin code locally while you're developing it:
+To develop this plugin further, make sure you can compile CoreDNS locally and get this repo (`go get github.com/snail2sky/coredns_mysql`). You can switch the CoreDNS mod file to look for the plugin code locally while you're developing it:
 
-Put `replace github.com/cloud66-oss/coredns_mysql => LOCAL_PATH_TO_THE_SOURCE_CODE` at the end of the `go.mod` file in CoreDNS code. 
+Put `replace github.com/snail2sky/coredns_mysql => LOCAL_PATH_TO_THE_SOURCE_CODE` at the end of the `go.mod` file in CoreDNS code. 
 
 Pull requests and bug reports are welcome!
 
