@@ -78,7 +78,6 @@ func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types
 
 func (handler *CoreDNSMySql) loadZones() error {
 	dbConn := handler.dbConn
-
 	result, err := dbConn.Query("SELECT DISTINCT zone FROM " + handler.TableName)
 	if err != nil {
 		return err
