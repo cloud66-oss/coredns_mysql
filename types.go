@@ -1,19 +1,45 @@
 package coredns_mysql
 
 import (
-	"encoding/json"
 	"net"
 	"time"
 
 	"github.com/miekg/dns"
 )
 
+//type Record struct {
+//	Zone       string
+//	Name       string
+//	RecordType string
+//	Ttl        uint32
+//	Content    string
+//
+//	handler *CoreDNSMySql
+//}
+
 type Record struct {
-	Zone       string
-	Name       string
-	RecordType string
-	Ttl        uint32
-	Content    string
+	Host string
+	Zone string
+	Type string
+	Data string
+	TTL  uint32
+
+	Priority uint32
+	Weight   uint32
+	Port     uint32
+	Target   string
+	Flag     uint8
+	Tag      string
+
+	PrimaryNS  string
+	RespPerson string
+	Serial     uint32
+	Refresh    uint32
+	Retry      uint32
+	Expire     uint32
+	Minimum    uint32
+
+	remark string
 
 	handler *CoreDNSMySql
 }
@@ -73,16 +99,11 @@ func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *ARecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if aRec.Ip == nil {
+	if rec.Data == nil {
 		return nil, nil, nil
 	}
-	r.A = aRec.Ip
+	r.A = rec.Data
 	return r, nil, nil
 }
 
@@ -94,17 +115,11 @@ func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *AAAARecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if aRec.Ip == nil {
+	if rec.Data == nil {
 		return nil, nil, nil
 	}
-
-	r.AAAA = aRec.Ip
+	r.AAAA = rec.Data
 	return r, nil, nil
 }
 
@@ -116,17 +131,11 @@ func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *TXTRecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if len(aRec.Text) == 0 {
+	if len(rec.Data) == 0 {
 		return nil, nil, nil
 	}
 
-	r.Txt = split255(aRec.Text)
+	r.Txt = split255(rec.Data)
 	return r, nil, nil
 }
 
@@ -138,16 +147,11 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *CNAMERecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if len(aRec.Host) == 0 {
+	if len(rec.Data) == 0 {
 		return nil, nil, nil
 	}
-	r.Target = dns.Fqdn(aRec.Host)
+	r.Target = dns.Fqdn(rec.Data)
 	return r, nil, nil
 }
 
@@ -159,17 +163,12 @@ func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *NSRecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if len(aRec.Host) == 0 {
+	if len(rec.Data) == 0 {
 		return nil, nil, nil
 	}
 
-	r.Ns = aRec.Host
+	r.Ns = rec.Data
 	extras, err = rec.handler.hosts(rec.Zone, r.Ns)
 	if err != nil {
 		return nil, nil, err
@@ -185,19 +184,14 @@ func (rec *Record) AsMXRecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *MXRecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if len(aRec.Host) == 0 {
+	if len(rec.Data) == 0 {
 		return nil, nil, nil
 	}
 
-	r.Mx = aRec.Host
-	r.Preference = aRec.Preference
-	extras, err = rec.handler.hosts(rec.Zone, aRec.Host)
+	r.Mx = rec.Data
+	r.Preference = rec.Priority
+	extras, err = rec.handler.hosts(rec.Zone, rec.Data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -213,59 +207,34 @@ func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *SRVRecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if len(aRec.Target) == 0 {
+	if len(rec.Target) == 0 {
 		return nil, nil, nil
 	}
 
-	r.Target = aRec.Target
-	r.Weight = aRec.Weight
-	r.Port = aRec.Port
-	r.Priority = aRec.Priority
+	r.Priority = rec.Priority
+	r.Weight = rec.Weight
+	r.Port = rec.Port
+	r.Target = rec.Target
 	return r, nil, nil
 }
 
 func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
 	r := new(dns.SOA)
-	var aRec *SOARecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if aRec.Ns == "" {
-		r.Hdr = dns.RR_Header{
-			Name:   dns.Fqdn(rec.fqdn()),
-			Rrtype: dns.TypeSOA,
-			Class:  dns.ClassINET,
-			Ttl:    rec.minTtl(),
-		}
-		r.Ns = "ns1." + rec.Name
-		r.Mbox = "hostmaster." + rec.Name
-		r.Refresh = 86400
-		r.Retry = 7200
-		r.Expire = 3600
-		r.Minttl = rec.minTtl()
-	} else {
-		r.Hdr = dns.RR_Header{
-			Name:   dns.Fqdn(rec.Zone),
-			Rrtype: dns.TypeSOA,
-			Class:  dns.ClassINET,
-			Ttl:    rec.minTtl(),
-		}
-		r.Ns = aRec.Ns
-		r.Mbox = aRec.MBox
-		r.Refresh = aRec.Refresh
-		r.Retry = aRec.Retry
-		r.Expire = aRec.Expire
-		r.Minttl = aRec.MinTtl
+	r.Hdr = dns.RR_Header{
+		Name:   dns.Fqdn(rec.Zone),
+		Rrtype: dns.TypeSOA,
+		Class:  dns.ClassINET,
+		Ttl:    rec.minTtl(),
 	}
-	r.Serial = rec.serial()
+	r.Ns = rec.PrimaryNS
+	r.Mbox = rec.RespPerson
+	r.Refresh = rec.Refresh
+	r.Retry = rec.Retry
+	r.Expire = rec.Expire
+	r.Minttl = rec.minTtl()
+	r.Serial = rec.Serial
 
 	return r, nil, nil
 }
@@ -278,28 +247,23 @@ func (rec *Record) AsCAARecord() (record dns.RR, extras []dns.RR, err error) {
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	var aRec *CAARecord
-	err = json.Unmarshal([]byte(rec.Content), &aRec)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if aRec.Value == "" || aRec.Tag == "" {
+	if rec.Data == "" || rec.Tag == "" {
 		return nil, nil, nil
 	}
 
-	r.Flag = aRec.Flag
-	r.Tag = aRec.Tag
-	r.Value = aRec.Value
+	r.Flag = rec.Flag
+	r.Tag = rec.Tag
+	r.Value = rec.Data
 
 	return r, nil, nil
 }
 
 func (rec *Record) minTtl() uint32 {
-	if rec.Ttl == 0 {
+	if rec.TTL == 0 {
 		return defaultTtl
 	}
-	return rec.Ttl
+	return rec.TTL
 }
 
 func (rec *Record) serial() uint32 {
@@ -327,8 +291,8 @@ func split255(s string) []string {
 }
 
 func (rec *Record) fqdn() string {
-	if rec.Name == "" {
+	if rec.Host == "@" {
 		return rec.Zone
 	}
-	return rec.Name + "." + rec.Zone
+	return rec.Host + "." + rec.Zone
 }

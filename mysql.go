@@ -14,33 +14,79 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
 	}
-	sqlQuery := fmt.Sprintf("SELECT name, zone, ttl, record_type, content FROM %s WHERE zone = ? AND name = ? AND record_type IN ('%s')",
-		handler.TableName,
-		strings.Join(types, "','"))
+	//sqlQuery := fmt.Sprintf("SELECT name, zone, ttl, record_type, content FROM %s WHERE zone = ? AND name = ? AND record_type IN ('%s')",
+	//	handler.TableName,
+	//	strings.Join(types, "','"))
+
+	sqlQuery := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
+		"priority, weight, port, target, flag, tag"+
+		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
+		"remark"+
+		"FROM %s "+
+		"WHERE zone = ? AND host = ? AND type IN ('%s')",
+		handler.TableName, strings.Join(types, "','"))
 	result, err := dbConn.Query(sqlQuery, zone, query)
 	if err != nil {
 		return nil, err
 	}
 
-	var recordName string
-	var recordZone string
-	var recordType string
-	var ttl uint32
-	var content string
+	var (
+		rHost string
+		rZone string
+		rType string
+		rData string
+		rTTL  uint32
+
+		rPriority uint32
+		rWeight   uint32
+		rPort     uint32
+		rTarget   string
+		rFlag     uint8
+		rTag      string
+
+		rPrimaryNS  string
+		rRespPerson string
+		rSerial     uint32
+		rRefresh    uint32
+		rRetry      uint32
+		rExpire     uint32
+		rMinimum    uint32
+
+		remark string
+	)
 	records := make([]*Record, 0)
 	for result.Next() {
-		err = result.Scan(&recordName, &recordZone, &ttl, &recordType, &content)
+		err = result.Scan(
+			&rHost, &rZone, &rType, &rData, &rTTL,
+			&rPriority, &rWeight, &rPort, &rTarget, &rFlag, &rTag,
+			&rPrimaryNS, &rRespPerson, &rSerial, &rRefresh, &rRetry, &rExpire, &rMinimum,
+			&remark,
+		)
 		if err != nil {
 			return nil, err
 		}
 
 		records = append(records, &Record{
-			Name:       recordName,
-			Zone:       recordZone,
-			RecordType: recordType,
-			Ttl:        ttl,
-			Content:    content,
-			handler:    handler,
+			Host: rHost,
+			Zone: rZone,
+			Type: rType,
+			Data: rData,
+			TTL:  rTTL,
+
+			Priority: rPriority,
+			Weight:   rWeight,
+			Port:     rPort,
+			Target:   rTarget,
+
+			PrimaryNS:  rPrimaryNS,
+			RespPerson: rRespPerson,
+			Serial:     rSerial,
+			Refresh:    rRefresh,
+			Retry:      rRetry,
+			Expire:     rExpire,
+			Minimum:    rMinimum,
+
+			handler: handler,
 		})
 	}
 
