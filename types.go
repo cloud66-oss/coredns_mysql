@@ -104,7 +104,7 @@ func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
 	if rec.Data == "" {
 		return nil, nil, nil
 	}
-	r.A = net.IP(rec.Data)
+	r.(*dns.A).A = net.ParseIP(rec.Data).To4()
 	fmt.Println(r)
 	fmt.Printf("%#v\n", r.A)
 	return r, nil, nil
