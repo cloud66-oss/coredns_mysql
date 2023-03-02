@@ -124,7 +124,8 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	state.SizeAndDo(m)
 	m = state.Scrub(m)
-	_ = w.WriteMsg(m)
+	err = w.WriteMsg(m)
+	fmt.Println(err)
 	fmt.Println("8----------------")
 	return dns.RcodeSuccess, nil
 }
