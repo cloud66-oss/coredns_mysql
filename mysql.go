@@ -14,6 +14,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
 	}
+
 	//sqlQuery := fmt.Sprintf("SELECT name, zone, ttl, record_type, content FROM %s WHERE zone = ? AND name = ? AND record_type IN ('%s')",
 	//	handler.TableName,
 	//	strings.Join(types, "','"))
@@ -37,9 +38,9 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 		rData string
 		rTTL  uint32
 
-		rPriority uint32
-		rWeight   uint32
-		rPort     uint32
+		rPriority uint16
+		rWeight   uint16
+		rPort     uint16
 		rTarget   string
 		rFlag     uint8
 		rTag      string
