@@ -140,7 +140,7 @@ func (handler *CoreDNSMySql) loadZones() error {
 
 		zones = append(zones, zone)
 	}
-
+	fmt.Println(zones)
 	handler.lastZoneUpdate = time.Now()
 	handler.zones = zones
 
