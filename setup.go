@@ -20,8 +20,6 @@ const (
 	defaultZoneUpdateTime     = 10 * time.Minute
 )
 
-var globalDB *sql.DB
-
 func init() {
 	caddy.RegisterPlugin("mysql", caddy.Plugin{
 		ServerType: "dns",
