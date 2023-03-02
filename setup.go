@@ -89,7 +89,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 					return &CoreDNSMySql{}, c.ArgErr()
 				}
 				var val int
-				val, _ = strconv.Atoi(c.Val())
+				val, err = strconv.Atoi(c.Val())
 				if err != nil {
 					val = defaultMaxOpenConnections
 				}
