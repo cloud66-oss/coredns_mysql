@@ -73,7 +73,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 				if !c.NextArg() {
 					return &CoreDNSMySql{}, c.ArgErr()
 				}
-				mysql.TableReferences = c.Val()
+				mysql.TableName = c.Val()
 			case "max_lifetime":
 				if !c.NextArg() {
 					return &CoreDNSMySql{}, c.ArgErr()
