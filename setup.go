@@ -14,10 +14,10 @@ import (
 const (
 	defaultTableName          = "coredns_records"
 	defaultTtl                = 360
-	defaultMaxLifeTime        = 60 * 24 * time.Minute
+	defaultMaxLifeTime        = 24 * time.Hour
 	defaultMaxOpenConnections = 10
 	defaultMaxIdleConnections = 10
-	defaultZoneUpdateTime     = 10 * time.Minute
+	defaultZoneUpdateTime     = 1 * time.Minute
 )
 
 func init() {

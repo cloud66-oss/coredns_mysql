@@ -2,6 +2,7 @@ package coredns_mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -41,6 +42,9 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 
 	qZone := plugin.Zones(handler.zones).Matches(qName)
+	fmt.Println("----------------")
+	fmt.Println(qName)
+	fmt.Println("----------------")
 	if qZone == "" {
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}

@@ -23,12 +23,12 @@ mysql {
 ```
 
 - `dsn` DSN for MySQL as per https://github.com/go-sql-driver/mysql examples. You can use `$ENV_NAME` format in the DSN, and it will be replaced with the environment variable value.
-- `table_prefix` Prefix for the MySQL tables. Defaults to `coredns_`.
-- `max_lifetime` Duration (in Golang format) for a SQL connection. Default is 1 minute.
+- `table_name` Prefix for the MySQL tables. Defaults to `coredns_records`.
+- `max_lifetime` Duration (in Golang format) for a SQL connection. Default is 24 hours.
 - `max_open_connections` Maximum number of open connections to the database server. Default is 10.
 - `max_idle_connections` Maximum number of idle connections in the database connection pool. Default is 10.
 - `ttl` Default TTL for records without a specified TTL in seconds. Default is 360 (seconds)
-- `zone_update_interval` Maximum time interval between loading all the zones from the database. Default is 10 minutes.
+- `zone_update_interval` Maximum time interval between loading all the zones from the database. Default is 1 minutes.
 
 ## Supported Record Types
 
