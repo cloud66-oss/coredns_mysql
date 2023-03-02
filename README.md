@@ -13,7 +13,7 @@ This plugin uses MySQL as a backend to store DNS records. These will then can se
 ```
 mysql {
     dsn DSN
-    [table_prefix TABLE_PREFIX]
+    [table_name TABLE_NAME]
     [max_lifetime MAX_LIFETIME]
     [max_open_connections MAX_OPEN_CONNECTIONS]
     [max_idle_connections MAX_IDLE_CONNECTIONS]

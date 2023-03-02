@@ -1,6 +1,7 @@
 package coredns_mysql
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -13,16 +14,16 @@ import (
 type CoreDNSMySql struct {
 	Next               plugin.Handler
 	Dsn                string
-	TablePrefix        string
+	TableName          string
 	MaxLifetime        time.Duration
 	MaxOpenConnections int
 	MaxIdleConnections int
-	Ttl                uint32
 
-	tableName      string
+	Ttl            uint32
 	lastZoneUpdate time.Time
 	zoneUpdateTime time.Duration
 	zones          []string
+	dbConn         *sql.DB
 }
 
 // ServeDNS implements the plugin.Handler interface.
