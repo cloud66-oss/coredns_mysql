@@ -24,9 +24,9 @@ type Record struct {
 	Data string
 	TTL  uint32
 
-	Priority uint16
-	Weight   uint16
-	Port     uint16
+	Priority int
+	Weight   int
+	Port     int
 	Target   string
 	Flag     uint8
 	Tag      string
