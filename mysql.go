@@ -10,7 +10,7 @@ import (
 
 func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...string) ([]*Record, error) {
 	dbConn := handler.dbConn
-	var query string
+	query := "@"
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
 	}
