@@ -12,8 +12,13 @@ import (
 func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...string) ([]*Record, error) {
 	dbConn := handler.dbConn
 	query := "@"
+	typesMap := make(map[string]bool)
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
+	}
+
+	for _, qType := range types {
+		typesMap[qType] = true
 	}
 
 	//sqlQuery := fmt.Sprintf("SELECT name, zone, ttl, record_type, content FROM %s WHERE zone = ? AND name = ? AND record_type IN ('%s')",
@@ -60,7 +65,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 					return nil, err
 				}
 				for _, extRecord := range extRecords {
-					if extRecord.Type == record.Type {
+					if _, ok := typesMap[extRecord.Type]; ok {
 						allExtRecords = append(allExtRecords, extRecord)
 					}
 				}
