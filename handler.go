@@ -106,6 +106,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 			answers = append(answers, answer)
 		}
 	}
+	fmt.Println(answers, extras, err)
 	fmt.Println("6----------------")
 
 	m := new(dns.Msg)
@@ -125,7 +126,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	state.SizeAndDo(m)
 	m = state.Scrub(m)
 	err = w.WriteMsg(m)
-	fmt.Println(err.Error(), err)
 	fmt.Println("8----------------")
 	return dns.RcodeSuccess, nil
 }

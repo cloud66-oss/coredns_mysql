@@ -1,7 +1,6 @@
 package coredns_mysql
 
 import (
-	"fmt"
 	"net"
 	"time"
 
@@ -105,8 +104,6 @@ func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
 		return nil, nil, nil
 	}
 	r.A = net.ParseIP(rec.Data).To4()
-	fmt.Println(r)
-	fmt.Printf("%#v\n", r.A)
 	return r, nil, nil
 }
 
