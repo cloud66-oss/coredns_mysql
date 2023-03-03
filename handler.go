@@ -49,7 +49,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 	fmt.Println("3----------------")
 	fmt.Println(qZone, qName, qType)
-	records, err := handler.findRecord(qZone, qName, qType, "CNAME")
+	records, err := handler.findRecord(qZone, qName, qType)
 	fmt.Println(records)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)

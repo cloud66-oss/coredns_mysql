@@ -1,6 +1,7 @@
 package coredns_mysql
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -22,72 +23,32 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 	sqlQuery := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
-		"remark	FROM %s WHERE zone = ? AND host = ? AND type IN ('%s')",
+		"remark	FROM %s WHERE zone = ? AND host = ? AND type = '%s'",
 		handler.TableName, strings.Join(types, "','"))
 	fmt.Println(sqlQuery)
-	result, err := dbConn.Query(sqlQuery, zone, query)
+	results, err := dbConn.Query(sqlQuery, zone, query)
+	if err != nil {
+		return nil, err
+	}
+	records, err := handler.getRecordsFromQueryResults(results)
 	if err != nil {
 		return nil, err
 	}
 
-	var (
-		rHost string
-		rZone string
-		rType string
-		rData string
-		rTTL  uint32
-
-		rPriority uint16
-		rWeight   uint16
-		rPort     uint16
-		rTarget   string
-		rFlag     uint8
-		rTag      string
-
-		rPrimaryNS  string
-		rRespPerson string
-		rSerial     uint32
-		rRefresh    uint32
-		rRetry      uint32
-		rExpire     uint32
-		rMinimum    uint32
-
-		remark string
-	)
-	records := make([]*Record, 0)
-	for result.Next() {
-		err = result.Scan(
-			&rHost, &rZone, &rType, &rData, &rTTL,
-			&rPriority, &rWeight, &rPort, &rTarget, &rFlag, &rTag,
-			&rPrimaryNS, &rRespPerson, &rSerial, &rRefresh, &rRetry, &rExpire, &rMinimum,
-			&remark,
-		)
+	if len(records) == 0 {
+		sqlQuery = fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
+			"priority, weight, port, target, flag, tag, "+
+			"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
+			"remark	FROM %s WHERE zone = ? AND host = ?", handler.TableName)
+		fmt.Println(sqlQuery)
+		results, err := dbConn.Query(sqlQuery, zone, query)
 		if err != nil {
 			return nil, err
 		}
-
-		records = append(records, &Record{
-			Host: rHost,
-			Zone: rZone,
-			Type: rType,
-			Data: rData,
-			TTL:  rTTL,
-
-			Priority: rPriority,
-			Weight:   rWeight,
-			Port:     rPort,
-			Target:   rTarget,
-
-			PrimaryNS:  rPrimaryNS,
-			RespPerson: rRespPerson,
-			Serial:     rSerial,
-			Refresh:    rRefresh,
-			Retry:      rRetry,
-			Expire:     rExpire,
-			Minimum:    rMinimum,
-
-			handler: handler,
-		})
+		records, err = handler.getRecordsFromQueryResults(results)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// If no records found, check for wildcard records.
@@ -178,4 +139,68 @@ func (handler *CoreDNSMySql) hosts(zone string, name string) ([]dns.RR, error) {
 	}
 
 	return answers, nil
+}
+
+func (handler *CoreDNSMySql) getRecordsFromQueryResults(results *sql.Rows) (records []*Record, err error) {
+	var (
+		rHost string
+		rZone string
+		rType string
+		rData string
+		rTTL  uint32
+
+		rPriority uint16
+		rWeight   uint16
+		rPort     uint16
+		rTarget   string
+		rFlag     uint8
+		rTag      string
+
+		rPrimaryNS  string
+		rRespPerson string
+		rSerial     uint32
+		rRefresh    uint32
+		rRetry      uint32
+		rExpire     uint32
+		rMinimum    uint32
+
+		remark string
+	)
+	for results.Next() {
+		err = results.Scan(
+			&rHost, &rZone, &rType, &rData, &rTTL,
+			&rPriority, &rWeight, &rPort, &rTarget, &rFlag, &rTag,
+			&rPrimaryNS, &rRespPerson, &rSerial, &rRefresh, &rRetry, &rExpire, &rMinimum,
+			&remark,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		record := &Record{
+			Host: rHost,
+			Zone: rZone,
+			Type: rType,
+			Data: rData,
+			TTL:  rTTL,
+
+			Priority: rPriority,
+			Weight:   rWeight,
+			Port:     rPort,
+			Target:   rTarget,
+
+			PrimaryNS:  rPrimaryNS,
+			RespPerson: rRespPerson,
+			Serial:     rSerial,
+			Refresh:    rRefresh,
+			Retry:      rRetry,
+			Expire:     rExpire,
+			Minimum:    rMinimum,
+
+			handler: handler,
+		}
+
+		records = append(records, record)
+	}
+	return records, nil
 }
