@@ -12,13 +12,8 @@ import (
 func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...string) ([]*Record, error) {
 	dbConn := handler.dbConn
 	query := "@"
-	typesMap := make(map[string]bool)
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
-	}
-
-	for _, qType := range types {
-		typesMap[qType] = true
 	}
 
 	//sqlQuery := fmt.Sprintf("SELECT name, zone, ttl, record_type, content FROM %s WHERE zone = ? AND name = ? AND record_type IN ('%s')",
@@ -28,7 +23,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 	sqlQuery := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
-		"remark	FROM %s WHERE zone = ? AND host = ? AND type = '%s'",
+		"remark	FROM %s WHERE zone = ? AND host = ? AND type IN ('%s')",
 		handler.TableName, strings.Join(types, "','"))
 	fmt.Println(sqlQuery)
 	results, err := dbConn.Query(sqlQuery, zone, query)
@@ -42,12 +37,12 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 
 	// maybe this is a CNAME or MX record, should resolve this record
 	if len(records) == 0 {
-		sqlQuery = fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
+		sqlQueryANY := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 			"priority, weight, port, target, flag, tag, "+
 			"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 			"remark	FROM %s WHERE zone = ? AND host = ?", handler.TableName)
-		fmt.Println(sqlQuery)
-		results, err := dbConn.Query(sqlQuery, zone, query)
+		fmt.Println(sqlQueryANY)
+		results, err := dbConn.Query(sqlQueryANY, zone, query)
 		if err != nil {
 			return nil, err
 		}
@@ -60,15 +55,13 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 		if len(records) > 0 {
 
 			for _, record := range records {
-				extRecords, err := handler.findRecord(record.Zone, record.Data, record.Type)
+				results, err := dbConn.Query(sqlQuery, record.Zone, record.Data)
+
+				extRecords, err := handler.getRecordsFromQueryResults(results)
 				if err != nil {
 					return nil, err
 				}
-				for _, extRecord := range extRecords {
-					if _, ok := typesMap[extRecord.Type]; ok {
-						allExtRecords = append(allExtRecords, extRecord)
-					}
-				}
+				allExtRecords = append(allExtRecords, extRecords...)
 			}
 		}
 		records = append(records, allExtRecords...)
