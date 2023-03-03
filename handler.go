@@ -85,7 +85,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		case "CNAME":
 			answer, extras, err = record.AsCNAMERecord()
 		case "NS":
-			answer, extras, err = record.AsNSRecord()
+			answer, extras, err = record.AsNSRecord(ctx, w, r)
 		case "TXT":
 			answer, extras, err = record.AsTXTRecord()
 		case "SOA":
@@ -93,7 +93,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		case "SRV":
 			answer, extras, err = record.AsSRVRecord()
 		case "MX":
-			answer, extras, err = record.AsMXRecord()
+			answer, extras, err = record.AsMXRecord(ctx, w, r)
 		case "CAA":
 			answer, extras, err = record.AsCAARecord()
 		default:

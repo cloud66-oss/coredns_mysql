@@ -1,6 +1,7 @@
 package coredns_mysql
 
 import (
+	"context"
 	"net"
 	"time"
 
@@ -140,7 +141,7 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 	return r, nil, nil
 }
 
-func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsNSRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (record dns.RR, extras []dns.RR, err error) {
 	r := new(dns.NS)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -217,7 +218,7 @@ func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
 	return r, nil, nil
 }
 
-func (rec *Record) AsMXRecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsMXRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (record dns.RR, extras []dns.RR, err error) {
 	r := new(dns.MX)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
