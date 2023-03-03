@@ -55,6 +55,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 		if len(records) > 0 {
 
 			for _, record := range records {
+				fmt.Println(sqlQuery, record.Zone, record.Data, record.Host)
 				results, err := dbConn.Query(sqlQuery, record.Zone, record.Data)
 
 				extRecords, err := handler.getRecordsFromQueryResults(results)
