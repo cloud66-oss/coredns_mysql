@@ -18,10 +18,6 @@ func (handler *CoreDNSMySql) findRecord(ctx context.Context, w dns.ResponseWrite
 		query = strings.TrimSuffix(name, "."+zone)
 	}
 
-	//sqlQuery := fmt.Sprintf("SELECT name, zone, ttl, record_type, content FROM %s WHERE zone = ? AND name = ? AND record_type IN ('%s')",
-	//	handler.TableName,
-	//	strings.Join(types, "','"))
-
 	sqlQuery := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
