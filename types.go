@@ -142,8 +142,8 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 }
 
 func (rec *Record) AsNSRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (record dns.RR, extras []dns.RR, err error) {
-	r := new(dns.NS)
-	r.Hdr = dns.RR_Header{
+	rr := new(dns.NS)
+	rr.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
 		Rrtype: dns.TypeNS,
 		Class:  dns.ClassINET,
@@ -154,12 +154,12 @@ func (rec *Record) AsNSRecord(ctx context.Context, w dns.ResponseWriter, r *dns.
 		return nil, nil, nil
 	}
 
-	r.Ns = rec.Data
-	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, r.Ns)
+	rr.Ns = rec.Data
+	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rr.Ns)
 	if err != nil {
 		return nil, nil, err
 	}
-	return r, extras, nil
+	return rr, extras, nil
 }
 
 func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
@@ -219,8 +219,8 @@ func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
 }
 
 func (rec *Record) AsMXRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (record dns.RR, extras []dns.RR, err error) {
-	r := new(dns.MX)
-	r.Hdr = dns.RR_Header{
+	rr := new(dns.MX)
+	rr.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
 		Rrtype: dns.TypeMX,
 		Class:  dns.ClassINET,
@@ -231,14 +231,14 @@ func (rec *Record) AsMXRecord(ctx context.Context, w dns.ResponseWriter, r *dns.
 		return nil, nil, nil
 	}
 
-	r.Mx = rec.Data
-	r.Preference = rec.Priority
+	rr.Mx = rec.Data
+	rr.Preference = rec.Priority
 	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rec.Data)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return r, extras, nil
+	return rr, extras, nil
 }
 
 func (rec *Record) AsCAARecord() (record dns.RR, extras []dns.RR, err error) {
