@@ -59,7 +59,6 @@ func (handler *CoreDNSMySql) findRecord(ctx context.Context, w dns.ResponseWrite
 				if err != nil {
 					return nil, err
 				}
-				fmt.Printf("%#v\n", extRecords)
 				allExtRecords = append(allExtRecords, extRecords...)
 			}
 		}

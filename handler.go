@@ -2,7 +2,6 @@ package coredns_mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -113,12 +112,10 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		m.Ns = append(m.Ns, answers...)
 	}
 	m.Extra = append(m.Extra, extras...)
-	fmt.Println("7----------------")
 
 	state.SizeAndDo(m)
 	m = state.Scrub(m)
 	err = w.WriteMsg(m)
-	fmt.Println("8----------------")
 	return dns.RcodeSuccess, nil
 }
 
