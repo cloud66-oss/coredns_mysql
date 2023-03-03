@@ -136,6 +136,7 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 		return nil, nil, nil
 	}
 	r.Target = dns.Fqdn(rec.Data)
+
 	return r, nil, nil
 }
 
