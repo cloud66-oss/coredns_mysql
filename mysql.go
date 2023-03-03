@@ -59,7 +59,11 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 				if err != nil {
 					return nil, err
 				}
-				allExtRecords = append(allExtRecords, extRecords...)
+				for _, extRecord := range extRecords {
+					if extRecord.Type == record.Type {
+						allExtRecords = append(allExtRecords, extRecord)
+					}
+				}
 			}
 		}
 		records = append(records, allExtRecords...)
