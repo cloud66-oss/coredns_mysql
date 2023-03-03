@@ -6,10 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coredns/coredns/plugin"
 	"github.com/miekg/dns"
+	"golang.org/x/net/context"
 )
 
-func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...string) ([]*Record, error) {
+func (handler *CoreDNSMySql) findRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, zone string, name string, types ...string) ([]*Record, error) {
 	dbConn := handler.dbConn
 	query := "@"
 	if name != zone {
@@ -55,10 +57,12 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 		if len(records) > 0 {
 
 			for _, record := range records {
+				qZone := plugin.Zones(handler.zones).Matches(record.Data)
+				if qZone == "" {
+					continue
+				}
+				extRecords, err := handler.findRecord(ctx, w, r, qZone, record.Data, types...)
 				fmt.Println(sqlQuery, record.Zone, record.Data, record.Host)
-				results, err := dbConn.Query(sqlQuery, record.Zone, record.Data)
-
-				extRecords, err := handler.getRecordsFromQueryResults(results)
 				if err != nil {
 					return nil, err
 				}
@@ -71,7 +75,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 
 	// If no records found, check for wildcard records.
 	if len(records) == 0 && name != zone {
-		return handler.findWildcardRecords(zone, name, types...)
+		return handler.findWildcardRecords(ctx, w, r, zone, name, types...)
 	}
 
 	return records, nil
@@ -80,7 +84,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 // findWildcardRecords attempts to find wildcard records
 // recursively until it finds matching records.
 // e.g. x.y.z -> *.y.z -> *.z -> *
-func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types ...string) ([]*Record, error) {
+func (handler *CoreDNSMySql) findWildcardRecords(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, zone string, name string, types ...string) ([]*Record, error) {
 	const (
 		wildcard       = "*"
 		wildcardPrefix = wildcard + "."
@@ -98,7 +102,7 @@ func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types
 		target = wildcardPrefix + name[i:]
 	}
 
-	return handler.findRecord(zone, target, types...)
+	return handler.findRecord(ctx, w, r, zone, target, types...)
 }
 
 func (handler *CoreDNSMySql) loadZones() error {
@@ -125,8 +129,8 @@ func (handler *CoreDNSMySql) loadZones() error {
 	return nil
 }
 
-func (handler *CoreDNSMySql) hosts(zone string, name string) ([]dns.RR, error) {
-	recs, err := handler.findRecord(zone, name, "A", "AAAA", "CNAME")
+func (handler *CoreDNSMySql) hosts(ctx context.Context, w dns.ResponseWriter, r *dns.Msg, zone string, name string) ([]dns.RR, error) {
+	recs, err := handler.findRecord(ctx, w, r, zone, name, "A", "AAAA", "CNAME")
 	if err != nil {
 		return nil, err
 	}

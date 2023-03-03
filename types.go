@@ -154,7 +154,7 @@ func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	r.Ns = rec.Data
-	extras, err = rec.handler.hosts(rec.Zone, r.Ns)
+	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, r.Ns)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -232,7 +232,7 @@ func (rec *Record) AsMXRecord() (record dns.RR, extras []dns.RR, err error) {
 
 	r.Mx = rec.Data
 	r.Preference = rec.Priority
-	extras, err = rec.handler.hosts(rec.Zone, rec.Data)
+	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rec.Data)
 	if err != nil {
 		return nil, nil, err
 	}
