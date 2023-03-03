@@ -33,28 +33,22 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	qName := state.Name()
 	qType := state.Type()
-	fmt.Println("1----------------")
 	if time.Since(handler.lastZoneUpdate) > handler.zoneUpdateTime {
 		err := handler.loadZones()
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
 	}
-	fmt.Println("2----------------")
 
 	// TODO 此处可能有性能瓶颈，如果域很多的话，则需要遍历很多次，有不同的域就要遍历一次. 如果域很多，可以考虑采用hash表进行优化
 	qZone := plugin.Zones(handler.zones).Matches(qName)
 	if qZone == "" {
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
-	fmt.Println("3----------------")
-	fmt.Println(qZone, qName, qType)
 	records, err := handler.findRecord(ctx, w, r, qZone, qName, qType)
-	fmt.Println(records)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
-	fmt.Println("4----------------")
 
 	var appendSOA bool
 	if len(records) == 0 {
@@ -70,7 +64,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if qType == "AXFR" {
 		return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
 	}
-	fmt.Println("5----------------")
 
 	answers := make([]dns.RR, 0)
 	extras := make([]dns.RR, 0)
@@ -107,8 +100,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 			answers = append(answers, answer)
 		}
 	}
-	fmt.Println(answers, extras, err)
-	fmt.Println("6----------------")
 
 	m := new(dns.Msg)
 	m.SetReply(r)

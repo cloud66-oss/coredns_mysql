@@ -23,7 +23,6 @@ func (handler *CoreDNSMySql) findRecord(ctx context.Context, w dns.ResponseWrite
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 		"remark	FROM %s WHERE zone = ? AND host = ? AND type IN ('%s')",
 		handler.TableName, strings.Join(types, "','"))
-	fmt.Println(sqlQuery)
 	results, err := dbConn.Query(sqlQuery, zone, query)
 	if err != nil {
 		return nil, err
@@ -39,7 +38,6 @@ func (handler *CoreDNSMySql) findRecord(ctx context.Context, w dns.ResponseWrite
 			"priority, weight, port, target, flag, tag, "+
 			"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 			"remark	FROM %s WHERE zone = ? AND host = ?", handler.TableName)
-		fmt.Println(sqlQueryANY)
 		results, err := dbConn.Query(sqlQueryANY, zone, query)
 		if err != nil {
 			return nil, err
@@ -58,7 +56,6 @@ func (handler *CoreDNSMySql) findRecord(ctx context.Context, w dns.ResponseWrite
 					continue
 				}
 				extRecords, err := handler.findRecord(ctx, w, r, qZone, record.Data, types...)
-				fmt.Println(sqlQuery, record.Zone, record.Data, record.Host)
 				if err != nil {
 					return nil, err
 				}
@@ -118,7 +115,6 @@ func (handler *CoreDNSMySql) loadZones() error {
 
 		zones = append(zones, zone)
 	}
-	fmt.Println(zones)
 	handler.lastZoneUpdate = time.Now()
 	handler.zones = zones
 
