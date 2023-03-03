@@ -122,7 +122,7 @@ func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
 	if rec.Data == "" {
 		return nil, nil, nil
 	}
-	r.AAAA = net.IP(rec.Data)
+	r.AAAA = net.ParseIP(rec.Data)
 	return r, nil, nil
 }
 
