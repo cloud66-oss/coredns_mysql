@@ -48,8 +48,9 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
 	fmt.Println("3----------------")
-
+	fmt.Println(qZone, qName, qType)
 	records, err := handler.findRecord(qZone, qName, qType)
+	fmt.Println(records)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
@@ -83,16 +84,16 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 			answer, extras, err = record.AsAAAARecord()
 		case "CNAME":
 			answer, extras, err = record.AsCNAMERecord()
+		case "NS":
+			answer, extras, err = record.AsNSRecord()
+		case "TXT":
+			answer, extras, err = record.AsTXTRecord()
 		case "SOA":
 			answer, extras, err = record.AsSOARecord()
 		case "SRV":
 			answer, extras, err = record.AsSRVRecord()
-		case "NS":
-			answer, extras, err = record.AsNSRecord()
 		case "MX":
 			answer, extras, err = record.AsMXRecord()
-		case "TXT":
-			answer, extras, err = record.AsTXTRecord()
 		case "CAA":
 			answer, extras, err = record.AsCAARecord()
 		default:
@@ -112,7 +113,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	m := new(dns.Msg)
 	m.SetReply(r)
 	m.Authoritative = true
-	m.RecursionAvailable = false
+	m.RecursionAvailable = true
 	m.Compress = true
 
 	if !appendSOA {

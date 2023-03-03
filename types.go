@@ -123,22 +123,6 @@ func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
 	return r, nil, nil
 }
 
-func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
-	r := new(dns.TXT)
-	r.Hdr = dns.RR_Header{
-		Name:   dns.Fqdn(rec.fqdn()),
-		Rrtype: dns.TypeTXT,
-		Class:  dns.ClassINET,
-		Ttl:    rec.minTtl(),
-	}
-	if len(rec.Data) == 0 {
-		return nil, nil, nil
-	}
-
-	r.Txt = split255(rec.Data)
-	return r, nil, nil
-}
-
 func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 	r := new(dns.CNAME)
 	r.Hdr = dns.RR_Header{
@@ -176,27 +160,40 @@ func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
 	return r, extras, nil
 }
 
-func (rec *Record) AsMXRecord() (record dns.RR, extras []dns.RR, err error) {
-	r := new(dns.MX)
+func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
+	r := new(dns.TXT)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
-		Rrtype: dns.TypeMX,
+		Rrtype: dns.TypeTXT,
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-
 	if len(rec.Data) == 0 {
 		return nil, nil, nil
 	}
 
-	r.Mx = rec.Data
-	r.Preference = rec.Priority
-	extras, err = rec.handler.hosts(rec.Zone, rec.Data)
-	if err != nil {
-		return nil, nil, err
-	}
+	r.Txt = split255(rec.Data)
+	return r, nil, nil
+}
 
-	return r, extras, nil
+func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
+	r := new(dns.SOA)
+
+	r.Hdr = dns.RR_Header{
+		Name:   dns.Fqdn(rec.Zone),
+		Rrtype: dns.TypeSOA,
+		Class:  dns.ClassINET,
+		Ttl:    rec.minTtl(),
+	}
+	r.Ns = rec.PrimaryNS
+	r.Mbox = rec.RespPerson
+	r.Refresh = rec.Refresh
+	r.Retry = rec.Retry
+	r.Expire = rec.Expire
+	r.Minttl = rec.minTtl()
+	r.Serial = rec.Serial
+
+	return r, nil, nil
 }
 
 func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
@@ -219,24 +216,27 @@ func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
 	return r, nil, nil
 }
 
-func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
-	r := new(dns.SOA)
-
+func (rec *Record) AsMXRecord() (record dns.RR, extras []dns.RR, err error) {
+	r := new(dns.MX)
 	r.Hdr = dns.RR_Header{
-		Name:   dns.Fqdn(rec.Zone),
-		Rrtype: dns.TypeSOA,
+		Name:   dns.Fqdn(rec.fqdn()),
+		Rrtype: dns.TypeMX,
 		Class:  dns.ClassINET,
 		Ttl:    rec.minTtl(),
 	}
-	r.Ns = rec.PrimaryNS
-	r.Mbox = rec.RespPerson
-	r.Refresh = rec.Refresh
-	r.Retry = rec.Retry
-	r.Expire = rec.Expire
-	r.Minttl = rec.minTtl()
-	r.Serial = rec.Serial
 
-	return r, nil, nil
+	if len(rec.Data) == 0 {
+		return nil, nil, nil
+	}
+
+	r.Mx = rec.Data
+	r.Preference = rec.Priority
+	extras, err = rec.handler.hosts(rec.Zone, rec.Data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, extras, nil
 }
 
 func (rec *Record) AsCAARecord() (record dns.RR, extras []dns.RR, err error) {
