@@ -35,6 +35,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 		return nil, err
 	}
 
+	// maybe this is a CNAME or MX record, should resolve this record
 	if len(records) == 0 {
 		sqlQuery = fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 			"priority, weight, port, target, flag, tag, "+
@@ -49,6 +50,19 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 		if err != nil {
 			return nil, err
 		}
+
+		allExtRecords := make([]*Record, 0)
+		if len(records) > 0 {
+
+			for _, record := range records {
+				extRecords, err := handler.findRecord(record.Zone, record.Data, record.Type)
+				if err != nil {
+					return nil, err
+				}
+				allExtRecords = append(allExtRecords, extRecords...)
+			}
+		}
+		records = append(records, allExtRecords...)
 	}
 
 	// If no records found, check for wildcard records.
