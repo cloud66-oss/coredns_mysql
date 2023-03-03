@@ -61,6 +61,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 				if err != nil {
 					return nil, err
 				}
+				fmt.Printf("%#v\n", extRecords)
 				allExtRecords = append(allExtRecords, extRecords...)
 			}
 		}
@@ -190,7 +191,7 @@ func (handler *CoreDNSMySql) getRecordsFromQueryResults(results *sql.Rows) (reco
 			&remark,
 		)
 		if err != nil {
-			return nil, err
+			return
 		}
 
 		record := &Record{
@@ -218,5 +219,5 @@ func (handler *CoreDNSMySql) getRecordsFromQueryResults(results *sql.Rows) (reco
 
 		records = append(records, record)
 	}
-	return records, nil
+	return
 }
