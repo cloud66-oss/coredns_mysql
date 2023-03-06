@@ -24,21 +24,21 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 	return records, nil
 }
 
-func (handler *CoreDNSMySql) dbQueryIP(zone, host string) ([]*Record, error) {
-	var allRecords = make([]*Record, 0)
+// func (handler *CoreDNSMySql) dbQueryIP(zone, host string) ([]*Record, error) {
+// 	var allRecords = make([]*Record, 0)
 
-	records, err := handler.dbQuery(zone, host, RecordType.A)
-	if err != nil {
-		return nil, err
-	}
-	allRecords = append(allRecords, records...)
-	records, err = handler.dbQuery(zone, host, RecordType.AAAA)
-	if err != nil {
-		return nil, err
-	}
-	allRecords = append(allRecords, records...)
-	return allRecords, nil
-}
+// 	records, err := handler.dbQuery(zone, host, RecordType.A)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	allRecords = append(allRecords, records...)
+// 	records, err = handler.dbQuery(zone, host, RecordType.AAAA)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	allRecords = append(allRecords, records...)
+// 	return allRecords, nil
+// }
 
 func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, []*Record, error) {
 	// 处理确定查询的是域本身？亦或是域名
@@ -82,19 +82,20 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 		default:
 
 		}
-	} else {
-
-		switch qType {
-		case RecordType.MX, RecordType.NS, RecordType.SOA:
-			for _, record := range records {
-				extRecords, err := handler.dbQueryIP(record.Zone, record.Host)
-				if err != nil {
-					return nil, nil, err
-				}
-				allExtRecords = append(allExtRecords, extRecords...)
-			}
-		}
 	}
+	// else {
+
+	// 	switch qType {
+	// 	case RecordType.MX, RecordType.NS, RecordType.SOA:
+	// 		for _, record := range records {
+	// 			extRecords, err := handler.dbQueryIP(record.Zone, record.Host)
+	// 			if err != nil {
+	// 				return nil, nil, err
+	// 			}
+	// 			allExtRecords = append(allExtRecords, extRecords...)
+	// 		}
+	// 	}
+	// }
 	fmt.Println("14------")
 
 	// If no records found, check for wildcard records.
