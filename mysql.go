@@ -56,7 +56,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println("13------")
+	fmt.Println("13------", records)
 
 	// 如果DB中没有该域名对应查询类型的记录，则尝试查询该域名的所有类型的记录
 	// 比如: 可能该域名本事其实是一个CNAME记录或者MX等等，
