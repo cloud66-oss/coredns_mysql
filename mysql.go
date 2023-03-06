@@ -63,8 +63,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	if len(records) == 0 {
 		// 判断查询类型是否为 A 或 AAAA，如果是则对该域名的CNAME记录进行查询
 		switch qType {
-		case RecordType.A:
-		case RecordType.AAAA:
+		case RecordType.A, RecordType.AAAA:
 			records, err = handler.dbQuery(zone, query, RecordType.CNAME)
 			fmt.Println(records, err, zone, query, "-----------------")
 			if err != nil {
@@ -82,9 +81,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	} else {
 
 		switch qType {
-		case RecordType.MX:
-		case RecordType.NS:
-		case RecordType.SOA:
+		case RecordType.MX, RecordType.NS, RecordType.SOA:
 			for _, record := range records {
 				extRecords, err := handler.dbQueryIP(record.Zone, record.Host)
 				if err != nil {
