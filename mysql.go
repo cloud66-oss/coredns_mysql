@@ -65,7 +65,6 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 			}
 			if len(records) != 0 {
 				for _, record := range records {
-					Println(record)
 					recordsIP, _, err := handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
 					if err != nil {
 						return nil, nil, err
@@ -90,7 +89,6 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	// 		}
 	// 	}
 	// }
-	Println("14------")
 
 	// If no records found, check for wildcard records.
 	// if len(records) == 0 && name != zone {

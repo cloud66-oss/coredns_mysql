@@ -2,7 +2,6 @@ package coredns_mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -30,7 +29,6 @@ type CoreDNSMySql struct {
 // ServeDNS implements the plugin.Handler interface.
 func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	// 包装的一个对象，方便使用
-	Println("1------")
 	state := request.Request{W: w, Req: r}
 
 	// 查询的名字，如 dig A qq.com 则 qName 为 qq.com
