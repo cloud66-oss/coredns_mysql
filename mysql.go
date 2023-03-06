@@ -12,7 +12,6 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 		"remark	FROM %s WHERE zone = ? AND host = ? AND type = ?", handler.TableName)
-	fmt.Println(sql, zone, host, qType)
 	results, err := handler.dbConn.Query(sql, zone, host, qType)
 	if err != nil {
 		return nil, err
@@ -42,21 +41,17 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 
 func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, []*Record, error) {
 	// 处理确定查询的是域本身？亦或是域名
-	fmt.Println("11------")
 
 	query := "@"
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
 	}
-	fmt.Println("12------")
-
 	// 以 host, zone, type 对DB进行查询，并且得到记录
 	var allExtRecords = make([]*Record, 0)
 	records, err := handler.dbQuery(zone, query, qType)
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println("13------", records, len(records) == 0, qType == RecordType.A)
 
 	// 如果DB中没有该域名对应查询类型的记录，则尝试查询该域名的所有类型的记录
 	// 比如: 可能该域名本事其实是一个CNAME记录或者MX等等，
@@ -65,13 +60,12 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 		switch qType {
 		case RecordType.A, RecordType.AAAA:
 			records, err = handler.dbQuery(zone, query, RecordType.CNAME)
-			fmt.Println(records, err, zone, query, "-----------------")
 			if err != nil {
 				return nil, nil, err
 			}
 			if len(records) != 0 {
 				for _, record := range records {
-					fmt.Println(record)
+					Println(record)
 					recordsIP, _, err := handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
 					if err != nil {
 						return nil, nil, err
@@ -96,7 +90,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	// 		}
 	// 	}
 	// }
-	fmt.Println("14------")
+	Println("14------")
 
 	// If no records found, check for wildcard records.
 	// if len(records) == 0 && name != zone {

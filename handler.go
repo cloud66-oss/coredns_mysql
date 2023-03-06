@@ -30,7 +30,7 @@ type CoreDNSMySql struct {
 // ServeDNS implements the plugin.Handler interface.
 func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	// 包装的一个对象，方便使用
-	fmt.Println("1------")
+	Println("1------")
 	state := request.Request{W: w, Req: r}
 
 	// 查询的名字，如 dig A qq.com 则 qName 为 qq.com
@@ -42,7 +42,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if qType == RecordType.AXFR {
 		return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
 	}
-	fmt.Println("2------")
 
 	// coredns-mysql插件会缓存所有的zone，以提高效率，会定时更新zone
 	if time.Since(handler.lastZoneUpdate) > handler.zoneUpdateTime {
@@ -51,31 +50,26 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
 	}
-	fmt.Println("3------")
 
 	// 判断当前 qName 是否能匹配到合适的 zone ，最长匹配原则
 	qZone := plugin.Zones(handler.zones).Matches(qName)
-	fmt.Println("4------")
 
 	// 如果不能匹配，则转给下一个 coredns 插件
 	if qZone == "" {
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
-	fmt.Println("5------")
 
 	// 从数据库中查询该记录
 	records, extRecords, err := handler.findRecord(qZone, qName, qType)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
-	fmt.Println("6------")
 
 	// 如果未查到域名，则查询SOA记录
 	// var appendSOA bool
 	if len(records) == 0 {
 		// 查询SOA记录
 		records, _, err = handler.findRecord(qZone, "@", RecordType.SOA)
-		fmt.Println("6.5", records)
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
@@ -89,13 +83,11 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
-	fmt.Println("7------")
 
 	extResults, err := handler.resolveRecords(extRecords)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
-	fmt.Println("8------")
 	// 创建一个DNS结果
 	m := new(dns.Msg)
 	// 该结果用与响应 r 这个请求
@@ -115,7 +107,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// }
 	// 添加额外信息
 	m.Extra = append(m.Extra, extResults...)
-	fmt.Println("9------")
 
 	// 回复响应
 	state.SizeAndDo(m)
