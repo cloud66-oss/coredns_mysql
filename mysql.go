@@ -12,7 +12,7 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 		"remark	FROM %s WHERE zone = ? AND host = ? AND type = ?", handler.TableName)
-
+	fmt.Println(sql, zone, host, qType)
 	results, err := handler.dbConn.Query(sql, zone, host, qType)
 	if err != nil {
 		return nil, err
@@ -66,6 +66,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 		case RecordType.A:
 		case RecordType.AAAA:
 			records, err = handler.dbQuery(zone, query, RecordType.CNAME)
+			fmt.Println(records, err, zone, query, "-----------------")
 			if err != nil {
 				return nil, nil, err
 			}
