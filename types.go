@@ -6,16 +6,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-//type Record struct {
-//	Zone       string
-//	Name       string
-//	RecordType string
-//	Ttl        uint32
-//	Content    string
-//
-//	handler *CoreDNSMySql
-//}
-
 type Record struct {
 	Host string
 	Zone string
@@ -55,53 +45,6 @@ var RecordType = struct {
 	CAA   string
 	AXFR  string
 }{"A", "AAAA", "CNAME", "NS", "SOA", "TXT", "MX", "SRV", "CAA", "AXFR"}
-
-type ARecord struct {
-	Ip net.IP `json:"ip"`
-}
-
-type AAAARecord struct {
-	Ip net.IP `json:"ip"`
-}
-
-type TXTRecord struct {
-	Text string `json:"text"`
-}
-
-type CNAMERecord struct {
-	Host string `json:"host"`
-}
-
-type NSRecord struct {
-	Host string `json:"host"`
-}
-
-type MXRecord struct {
-	Host       string `json:"host"`
-	Preference uint16 `json:"preference"`
-}
-
-type SRVRecord struct {
-	Priority uint16 `json:"priority"`
-	Weight   uint16 `json:"weight"`
-	Port     uint16 `json:"port"`
-	Target   string `json:"target"`
-}
-
-type SOARecord struct {
-	Ns      string `json:"ns"`
-	MBox    string `json:"MBox"`
-	Refresh uint32 `json:"refresh"`
-	Retry   uint32 `json:"retry"`
-	Expire  uint32 `json:"expire"`
-	MinTtl  uint32 `json:"minttl"`
-}
-
-type CAARecord struct {
-	Flag  uint8  `json:"flag"`
-	Tag   string `json:"tag"`
-	Value string `json:"value"`
-}
 
 func (rec *Record) AsARecord() (records []dns.RR, err error) {
 	r := new(dns.A)
@@ -168,7 +111,6 @@ func (rec *Record) AsNSRecord() (records []dns.RR, err error) {
 	}
 
 	r.Ns = rec.Data
-	// extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rr.Ns)
 	if err != nil {
 		return nil, nil
 	}
