@@ -45,10 +45,13 @@ func (handler *CoreDNSMySql) dbQueryIP(args ...string) ([]*Record, error) {
 
 func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, []*Record, error) {
 	// 处理确定查询的是域本身？亦或是域名
+	fmt.Println("11------")
+
 	query := "@"
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
 	}
+	fmt.Println("12------")
 
 	// 以 host, zone, type 对DB进行查询，并且得到记录
 	var allExtRecords = make([]*Record, 0)
@@ -56,6 +59,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	if err != nil {
 		return nil, nil, err
 	}
+	fmt.Println("13------")
 
 	// 如果DB中没有该域名对应查询类型的记录，则尝试查询该域名的所有类型的记录
 	// 比如: 可能该域名本事其实是一个CNAME记录或者MX等等，
@@ -92,6 +96,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 			}
 		}
 	}
+	fmt.Println("14------")
 
 	// If no records found, check for wildcard records.
 	// if len(records) == 0 && name != zone {
