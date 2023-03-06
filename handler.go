@@ -72,15 +72,14 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	// 如果未查到域名，则查询SOA记录
 	// var appendSOA bool
-	// if len(records) == 0 {
-	// 	appendSOA = true
-	// 	// 查询SOA记录
-	// 	recs, extRecords, err := handler.findRecord(ctx, w, r, qZone, "@", "SOA")
-	// 	if err != nil {
-	// 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
-	// 	}
-	// 	records = append(records, recs...)
-	// }
+	if len(records) == 0 {
+		// 查询SOA记录
+		records, _, err = handler.findRecord(qZone, "@", RecordType.SOA)
+		fmt.Println("6.5", records)
+		if err != nil {
+			return handler.errorResponse(state, dns.RcodeServerFailure, err)
+		}
+	}
 
 	// 用于存放答案
 	// answers := make([]dns.RR, 0)
