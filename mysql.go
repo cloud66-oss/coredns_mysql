@@ -72,7 +72,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 			if len(records) != 0 {
 				for _, record := range records {
 					fmt.Println(record)
-					handler.findRecord(record.Zone, record.Data, qType)
+					handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
 				}
 			}
 		default:
