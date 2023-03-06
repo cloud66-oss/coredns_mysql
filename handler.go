@@ -73,10 +73,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		}
 	}
 
-	// 用于存放答案
-	// answers := make([]dns.RR, 0)
-	// extras := make([]dns.RR, 0)
-
 	results, err := handler.resolveRecords(records)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
