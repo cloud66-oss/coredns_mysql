@@ -12,6 +12,7 @@ func (handler *CoreDNSMySql) dbQuery(args ...string) ([]*Record, error) {
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 		"remark	FROM %s WHERE zone = ? AND host = ? AND type = ?", handler.TableName)
+	fmt.Println(sql, args)
 
 	results, err := handler.dbConn.Query(sql, args)
 	if err != nil {

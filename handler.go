@@ -96,11 +96,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// 若添加 SOA，则需要添加相关的 NS 信息
 	// if !appendSOA {
 	m.Answer = append(m.Answer, results...)
-	// }
-	// else {
-	// 	m.Ns = append(m.Ns, results...)
-	// }
-	// 添加额外信息
+
 	m.Extra = append(m.Extra, extResults...)
 
 	// 回复响应
