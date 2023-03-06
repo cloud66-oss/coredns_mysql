@@ -2,6 +2,7 @@ package coredns_mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
@@ -43,10 +44,12 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	// coredns-mysql插件会缓存所有的zone，以提高效率，会定时更新zone
 	if time.Since(handler.lastZoneUpdate) > handler.zoneUpdateTime {
+		fmt.Println("正在更新域", handler.zones)
 		err := handler.loadZones()
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
+		fmt.Println("更新域完成", handler.zones)
 	}
 
 	// 判断当前 qName 是否能匹配到合适的 zone ，最长匹配原则
