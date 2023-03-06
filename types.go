@@ -1,9 +1,7 @@
 package coredns_mysql
 
 import (
-	"context"
 	"net"
-	"time"
 
 	"github.com/miekg/dns"
 )
@@ -44,6 +42,19 @@ type Record struct {
 
 	handler *CoreDNSMySql
 }
+
+var RecordType = struct {
+	A     string
+	AAAA  string
+	CNAME string
+	NS    string
+	SOA   string
+	TXT   string
+	MX    string
+	SRV   string
+	CAA   string
+	AXFR  string
+}{"A", "AAAA", "CNAME", "NS", "SOA", "TXT", "MX", "SRV", "CAA", "AXFR"}
 
 type ARecord struct {
 	Ip net.IP `json:"ip"`
@@ -92,7 +103,7 @@ type CAARecord struct {
 	Value string `json:"value"`
 }
 
-func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsARecord() (records []dns.RR, err error) {
 	r := new(dns.A)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -102,13 +113,14 @@ func (rec *Record) AsARecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if rec.Data == "" {
-		return nil, nil, nil
+		return nil, nil
 	}
 	r.A = net.ParseIP(rec.Data).To4()
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsAAAARecord() (records []dns.RR, err error) {
 	r := new(dns.AAAA)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -118,13 +130,14 @@ func (rec *Record) AsAAAARecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if rec.Data == "" {
-		return nil, nil, nil
+		return nil, nil
 	}
 	r.AAAA = net.ParseIP(rec.Data)
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsCNAMERecord() (records []dns.RR, err error) {
 	r := new(dns.CNAME)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -134,16 +147,16 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(rec.Data) == 0 {
-		return nil, nil, nil
+		return nil, nil
 	}
 	r.Target = dns.Fqdn(rec.Data)
-
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsNSRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (record dns.RR, extras []dns.RR, err error) {
-	rr := new(dns.NS)
-	rr.Hdr = dns.RR_Header{
+func (rec *Record) AsNSRecord() (records []dns.RR, err error) {
+	r := new(dns.NS)
+	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
 		Rrtype: dns.TypeNS,
 		Class:  dns.ClassINET,
@@ -151,18 +164,19 @@ func (rec *Record) AsNSRecord(ctx context.Context, w dns.ResponseWriter, r *dns.
 	}
 
 	if len(rec.Data) == 0 {
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	rr.Ns = rec.Data
-	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rr.Ns)
+	r.Ns = rec.Data
+	// extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rr.Ns)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil
 	}
-	return rr, extras, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsTXTRecord() (records []dns.RR, err error) {
 	r := new(dns.TXT)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -171,14 +185,15 @@ func (rec *Record) AsTXTRecord() (record dns.RR, extras []dns.RR, err error) {
 		Ttl:    rec.minTtl(),
 	}
 	if len(rec.Data) == 0 {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	r.Txt = split255(rec.Data)
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsSOARecord() (records []dns.RR, err error) {
 	r := new(dns.SOA)
 
 	r.Hdr = dns.RR_Header{
@@ -194,11 +209,11 @@ func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
 	r.Expire = rec.Expire
 	r.Minttl = rec.minTtl()
 	r.Serial = rec.Serial
-
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsSRVRecord() (records []dns.RR, err error) {
 	r := new(dns.SRV)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -208,19 +223,20 @@ func (rec *Record) AsSRVRecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if len(rec.Target) == 0 {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	r.Priority = rec.Priority
 	r.Weight = rec.Weight
 	r.Port = rec.Port
 	r.Target = rec.Target
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsMXRecord(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (record dns.RR, extras []dns.RR, err error) {
-	rr := new(dns.MX)
-	rr.Hdr = dns.RR_Header{
+func (rec *Record) AsMXRecord() (records []dns.RR, err error) {
+	r := new(dns.MX)
+	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
 		Rrtype: dns.TypeMX,
 		Class:  dns.ClassINET,
@@ -228,20 +244,20 @@ func (rec *Record) AsMXRecord(ctx context.Context, w dns.ResponseWriter, r *dns.
 	}
 
 	if len(rec.Data) == 0 {
-		return nil, nil, nil
+		return nil, nil
 	}
 
-	rr.Mx = rec.Data
-	rr.Preference = rec.Priority
-	extras, err = rec.handler.hosts(ctx, w, r, rec.Zone, rec.Data)
+	r.Mx = rec.Data
+	r.Preference = rec.Priority
+	// extras, err = rec.handler.hosts(rec.Zone, rec.Data)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil
 	}
-
-	return rr, extras, nil
+	records = append(records, r)
+	return records, nil
 }
 
-func (rec *Record) AsCAARecord() (record dns.RR, extras []dns.RR, err error) {
+func (rec *Record) AsCAARecord() (records []dns.RR, err error) {
 	r := new(dns.CAA)
 	r.Hdr = dns.RR_Header{
 		Name:   dns.Fqdn(rec.fqdn()),
@@ -251,14 +267,14 @@ func (rec *Record) AsCAARecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 
 	if rec.Data == "" || rec.Tag == "" {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	r.Flag = rec.Flag
 	r.Tag = rec.Tag
 	r.Value = rec.Data
-
-	return r, nil, nil
+	records = append(records, r)
+	return records, nil
 }
 
 func (rec *Record) minTtl() uint32 {
@@ -268,9 +284,9 @@ func (rec *Record) minTtl() uint32 {
 	return rec.TTL
 }
 
-func (rec *Record) serial() uint32 {
-	return uint32(time.Now().Unix())
-}
+// func (rec *Record) serial() uint32 {
+// 	return uint32(time.Now().Unix())
+// }
 
 func split255(s string) []string {
 	if len(s) < 255 {

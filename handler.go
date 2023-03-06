@@ -28,10 +28,20 @@ type CoreDNSMySql struct {
 
 // ServeDNS implements the plugin.Handler interface.
 func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	// 包装的一个对象，方便使用
 	state := request.Request{W: w, Req: r}
 
+	// 查询的名字，如 dig A qq.com 则 qName 为 qq.com
 	qName := state.Name()
+	// 查询的类型，为 A
 	qType := state.Type()
+
+	// 不支持区域传送
+	if qType == RecordType.AXFR {
+		return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
+	}
+
+	// coredns-mysql插件会缓存所有的zone，以提高效率，会定时更新zone
 	if time.Since(handler.lastZoneUpdate) > handler.zoneUpdateTime {
 		err := handler.loadZones()
 		if err != nil {
@@ -39,83 +49,68 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		}
 	}
 
-	// TODO 此处可能有性能瓶颈，如果域很多的话，则需要遍历很多次，有不同的域就要遍历一次. 如果域很多，可以考虑采用hash表进行优化
+	// 判断当前 qName 是否能匹配到合适的 zone ，最长匹配原则
 	qZone := plugin.Zones(handler.zones).Matches(qName)
+	// 如果不能匹配，则转给下一个 coredns 插件
 	if qZone == "" {
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
-	records, err := handler.findRecord(ctx, w, r, qZone, qName, qType)
+
+	// 从数据库中查询该记录
+	records, extRecords, err := handler.findRecord(qZone, qName, qType)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
 
-	var appendSOA bool
-	if len(records) == 0 {
-		appendSOA = true
-		// no record found but we are going to return a SOA
-		recs, err := handler.findRecord(ctx, w, r, qZone, "@", "SOA")
-		if err != nil {
-			return handler.errorResponse(state, dns.RcodeServerFailure, err)
-		}
-		records = append(records, recs...)
+	// 如果未查到域名，则查询SOA记录
+	// var appendSOA bool
+	// if len(records) == 0 {
+	// 	appendSOA = true
+	// 	// 查询SOA记录
+	// 	recs, extRecords, err := handler.findRecord(ctx, w, r, qZone, "@", "SOA")
+	// 	if err != nil {
+	// 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
+	// 	}
+	// 	records = append(records, recs...)
+	// }
+
+	// 用于存放答案
+	// answers := make([]dns.RR, 0)
+	// extras := make([]dns.RR, 0)
+
+	results, err := handler.resolveRecords(records)
+	if err != nil {
+		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
 
-	if qType == "AXFR" {
-		return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
+	extResults, err := handler.resolveRecords(extRecords)
+	if err != nil {
+		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
-
-	answers := make([]dns.RR, 0)
-	extras := make([]dns.RR, 0)
-
-	for _, record := range records {
-		var answer dns.RR
-		switch record.Type {
-		case "A":
-			answer, extras, err = record.AsARecord()
-		case "AAAA":
-			answer, extras, err = record.AsAAAARecord()
-		case "CNAME":
-			answer, extras, err = record.AsCNAMERecord()
-		case "NS":
-			answer, extras, err = record.AsNSRecord(ctx, w, r)
-		case "TXT":
-			answer, extras, err = record.AsTXTRecord()
-		case "SOA":
-			answer, extras, err = record.AsSOARecord()
-		case "SRV":
-			answer, extras, err = record.AsSRVRecord()
-		case "MX":
-			answer, extras, err = record.AsMXRecord(ctx, w, r)
-		case "CAA":
-			answer, extras, err = record.AsCAARecord()
-		default:
-			return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
-		}
-
-		if err != nil {
-			return handler.errorResponse(state, dns.RcodeServerFailure, err)
-		}
-		if answer != nil {
-			answers = append(answers, answer)
-		}
-	}
-
+	// 创建一个DNS结果
 	m := new(dns.Msg)
+	// 该结果用与响应 r 这个请求
 	m.SetReply(r)
+	// 设置为权威答案
 	m.Authoritative = true
+	// 允许递归查询
 	m.RecursionAvailable = true
+	// 允许压缩
 	m.Compress = true
 
-	if !appendSOA {
-		m.Answer = append(m.Answer, answers...)
-	} else {
-		m.Ns = append(m.Ns, answers...)
-	}
-	m.Extra = append(m.Extra, extras...)
+	// 若添加 SOA，则需要添加相关的 NS 信息
+	// if !appendSOA {
+	m.Answer = append(m.Answer, results...)
+	// } else {
+	// m.Ns = append(m.Ns, answers...)
+	// }
+	// 添加额外信息
+	m.Extra = append(m.Extra, extResults...)
 
+	// 回复响应
 	state.SizeAndDo(m)
 	m = state.Scrub(m)
-	err = w.WriteMsg(m)
+	w.WriteMsg(m)
 	return dns.RcodeSuccess, nil
 }
 
@@ -131,4 +126,43 @@ func (handler *CoreDNSMySql) errorResponse(state request.Request, rCode int, err
 	_ = state.W.WriteMsg(m)
 	// Return success as the rCode to signal we have written to the client.
 	return dns.RcodeSuccess, err
+}
+
+func (handler *CoreDNSMySql) resolveRecords(records []*Record) ([]dns.RR, error) {
+	var allAnswer = make([]dns.RR, 0)
+	var err error
+	for _, record := range records {
+		var answer []dns.RR
+
+		switch record.Type {
+		case "A":
+			answer, err = record.AsARecord()
+		case "AAAA":
+			answer, err = record.AsAAAARecord()
+		case "CNAME":
+			answer, err = record.AsCNAMERecord()
+		case "NS":
+			answer, err = record.AsNSRecord()
+		case "TXT":
+			answer, err = record.AsTXTRecord()
+		case "SOA":
+			answer, err = record.AsSOARecord()
+		case "SRV":
+			answer, err = record.AsSRVRecord()
+		case "MX":
+			answer, err = record.AsMXRecord()
+		case "CAA":
+			answer, err = record.AsCAARecord()
+		default:
+			return nil, err
+		}
+		allAnswer = append(allAnswer, answer...)
+		// if err != nil {
+		// 	return handler.errorResponse(state, dns.RcodeServerFailure, err)
+		// }
+		// if answer != nil {
+		// 	answers = append(answers, answer)
+		// }
+	}
+	return allAnswer, err
 }
