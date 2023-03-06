@@ -191,7 +191,6 @@ func (rec *Record) AsMXRecord() (records []dns.RR, err error) {
 
 	r.Mx = rec.Data
 	r.Preference = rec.Priority
-	// extras, err = rec.handler.hosts(rec.Zone, rec.Data)
 	if err != nil {
 		return nil, nil
 	}
@@ -225,10 +224,6 @@ func (rec *Record) minTtl() uint32 {
 	}
 	return rec.TTL
 }
-
-// func (rec *Record) serial() uint32 {
-// 	return uint32(time.Now().Unix())
-// }
 
 func split255(s string) []string {
 	if len(s) < 255 {
