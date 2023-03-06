@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-func (handler *CoreDNSMySql) dbQuery(args ...string) ([]*Record, error) {
+func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error) {
 	sql := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
 		"remark	FROM %s WHERE zone = ? AND host = ? AND type = ?", handler.TableName)
 
-	results, err := handler.dbConn.Query(sql, args)
+	results, err := handler.dbConn.Query(sql, zone, host, qType)
 	if err != nil {
 		return nil, err
 	}
@@ -24,18 +24,15 @@ func (handler *CoreDNSMySql) dbQuery(args ...string) ([]*Record, error) {
 	return records, nil
 }
 
-func (handler *CoreDNSMySql) dbQueryIP(args ...string) ([]*Record, error) {
+func (handler *CoreDNSMySql) dbQueryIP(zone, host string) ([]*Record, error) {
 	var allRecords = make([]*Record, 0)
 
-	a_query := append(args, RecordType.A)
-	aaaa_query := append(args, RecordType.AAAA)
-
-	records, err := handler.dbQuery(a_query...)
+	records, err := handler.dbQuery(zone, host, RecordType.A)
 	if err != nil {
 		return nil, err
 	}
 	allRecords = append(allRecords, records...)
-	records, err = handler.dbQuery(aaaa_query...)
+	records, err = handler.dbQuery(zone, host, RecordType.AAAA)
 	if err != nil {
 		return nil, err
 	}
