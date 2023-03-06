@@ -64,7 +64,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 
 	// 如果未查到域名，则查询SOA记录
-	// var appendSOA bool
 	if len(records) == 0 {
 		// 查询SOA记录
 		records, _, err = handler.findRecord(qZone, "@", RecordType.SOA)
@@ -72,10 +71,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
 	}
-
-	// 用于存放答案
-	// answers := make([]dns.RR, 0)
-	// extras := make([]dns.RR, 0)
 
 	results, err := handler.resolveRecords(records)
 	if err != nil {
@@ -98,12 +93,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	m.Compress = true
 
 	// 若添加 SOA，则需要添加相关的 NS 信息
-	// if !appendSOA {
 	m.Answer = append(m.Answer, results...)
-	// } else {
-	// m.Ns = append(m.Ns, answers...)
-	// }
-	// 添加额外信息
 	m.Extra = append(m.Extra, extResults...)
 
 	// 回复响应
@@ -156,12 +146,6 @@ func (handler *CoreDNSMySql) resolveRecords(records []*Record) ([]dns.RR, error)
 			return nil, err
 		}
 		allAnswer = append(allAnswer, answer...)
-		// if err != nil {
-		// 	return handler.errorResponse(state, dns.RcodeServerFailure, err)
-		// }
-		// if answer != nil {
-		// 	answers = append(answers, answer)
-		// }
 	}
 	return allAnswer, err
 }

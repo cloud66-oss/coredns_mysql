@@ -23,22 +23,6 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 	return records, nil
 }
 
-// func (handler *CoreDNSMySql) dbQueryIP(zone, host string) ([]*Record, error) {
-// 	var allRecords = make([]*Record, 0)
-
-// 	records, err := handler.dbQuery(zone, host, RecordType.A)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	allRecords = append(allRecords, records...)
-// 	records, err = handler.dbQuery(zone, host, RecordType.AAAA)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	allRecords = append(allRecords, records...)
-// 	return allRecords, nil
-// }
-
 func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, []*Record, error) {
 	// 处理确定查询的是域本身？亦或是域名
 
@@ -76,52 +60,9 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 
 		}
 	}
-	// else {
-
-	// 	switch qType {
-	// 	case RecordType.MX, RecordType.NS, RecordType.SOA:
-	// 		for _, record := range records {
-	// 			extRecords, err := handler.dbQueryIP(record.Zone, record.Host)
-	// 			if err != nil {
-	// 				return nil, nil, err
-	// 			}
-	// 			allExtRecords = append(allExtRecords, extRecords...)
-	// 		}
-	// 	}
-	// }
-
-	// If no records found, check for wildcard records.
-	// if len(records) == 0 && name != zone {
-	// 	return handler.findWildcardRecords(ctx, w, r, zone, name, qType)
-	// }
 
 	return records, allExtRecords, nil
 }
-
-// findWildcardRecords attempts to find wildcard records
-// recursively until it finds matching records.
-// e.g. x.y.z -> *.y.z -> *.z -> *
-// func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types ...string) ([]*Record, error) {
-// 	const (
-// 		wildcard       = "*"
-// 		wildcardPrefix = wildcard + "."
-// 	)
-
-// 	if name == wildcard {
-// 		return nil, nil
-// 	}
-// 	return nil, nil
-
-// 	// name = strings.TrimPrefix(name, wildcardPrefix)
-
-// 	// target := wildcard
-// 	// i, shot := dns.NextLabel(name, 0)
-// 	// if !shot {
-// 	// 	target = wildcardPrefix + name[i:]
-// 	// }
-
-// 	// return handler.findRecord(ctx, w, r, zone, target, types...)
-// }
 
 func (handler *CoreDNSMySql) loadZones() error {
 	dbConn := handler.dbConn
@@ -145,40 +86,6 @@ func (handler *CoreDNSMySql) loadZones() error {
 
 	return nil
 }
-
-// func (handler *CoreDNSMySql) hosts(zone string, name string) ([]dns.RR, error) {
-// 	recs, _, err := handler.findRecord(zone, name, "A")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	// answers := make([]dns.RR, 0)
-
-// 	// for _, rec := range recs {
-// 	// 	switch rec.Type {
-// 	// 	case "A":
-// 	// 		aRec, err := rec.AsARecord()
-// 	// 		if err != nil {
-// 	// 			return nil, err
-// 	// 		}
-// 	// 		answers = append(answers, aRec)
-// 	// 	case "AAAA":
-// 	// 		aRec, err := rec.AsAAAARecord()
-// 	// 		if err != nil {
-// 	// 			return nil, err
-// 	// 		}
-// 	// 		answers = append(answers, aRec)
-// 	// 	case "CNAME":
-// 	// 		aRec, _, err := rec.AsCNAMERecord()
-// 	// 		if err != nil {
-// 	// 			return nil, err
-// 	// 		}
-// 	// 		answers = append(answers, aRec)
-// 	// 	}
-// 	// }
-
-// 	return recs, nil
-// }
 
 func (handler *CoreDNSMySql) getRecordsFromQueryResults(results *sql.Rows) (records []*Record, err error) {
 	var (
