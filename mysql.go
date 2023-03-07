@@ -23,7 +23,7 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 	return records, nil
 }
 
-func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, []*Record, error) {
+func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, error) {
 	// 处理确定查询的是域本身？亦或是域名
 
 	query := "@"
@@ -31,10 +31,9 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 		query = strings.TrimSuffix(name, "."+zone)
 	}
 	// 以 host, zone, type 对DB进行查询，并且得到记录
-	var allExtRecords = make([]*Record, 0)
 	records, err := handler.dbQuery(zone, query, qType)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// 如果DB中没有该域名对应查询类型的记录，则尝试查询该域名的所有类型的记录
@@ -43,25 +42,25 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 		// 判断查询类型是否为 A 或 AAAA，如果是则对该域名的CNAME记录进行查询
 		switch qType {
 		case RecordType.A, RecordType.AAAA:
+			// 查询 CNAME 类型的记录，看是否存在
 			records, err = handler.dbQuery(zone, query, RecordType.CNAME)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
+			// 如果存在 CNAME 记录，则查询 CNAME 指向的域名的 A 或 AAAA 类型的记录
 			if len(records) != 0 {
 				for _, record := range records {
-					recordsIP, _, err := handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
+					recordsIP, err := handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
 					if err != nil {
-						return nil, nil, err
+						return nil, err
 					}
 					records = append(records, recordsIP...)
 				}
 			}
-		default:
-
 		}
 	}
 
-	return records, allExtRecords, nil
+	return records, nil
 }
 
 func (handler *CoreDNSMySql) loadZones() error {

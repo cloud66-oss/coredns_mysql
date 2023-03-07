@@ -61,7 +61,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 
 	// 从数据库中查询该记录
-	records, extRecords, err := handler.findRecord(qZone, qName, qType)
+	records, err := handler.findRecord(qZone, qName, qType)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
@@ -69,7 +69,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// 如果未查到域名，则查询SOA记录
 	if len(records) == 0 {
 		// 查询SOA记录
-		records, _, err = handler.findRecord(qZone, "@", RecordType.SOA)
+		records, err = handler.findRecord(qZone, "@", RecordType.SOA)
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
@@ -80,10 +80,10 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
 
-	extResults, err := handler.resolveRecords(extRecords)
-	if err != nil {
-		return handler.errorResponse(state, dns.RcodeServerFailure, err)
-	}
+	// extResults, err := handler.resolveRecords(records)
+	// if err != nil {
+	// 	return handler.errorResponse(state, dns.RcodeServerFailure, err)
+	// }
 	// 创建一个DNS结果
 	m := new(dns.Msg)
 	// 该结果用与响应 r 这个请求
@@ -97,7 +97,8 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	// 若添加 SOA，则需要添加相关的 NS 信息
 	m.Answer = append(m.Answer, results...)
-	m.Extra = append(m.Extra, extResults...)
+	// 不添加任何额外的DNS信息
+	// m.Extra = append(m.Extra, extResults...)
 
 	// 回复响应
 	state.SizeAndDo(m)
