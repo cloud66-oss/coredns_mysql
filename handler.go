@@ -24,11 +24,16 @@ type CoreDNSMySql struct {
 	lastZoneUpdate time.Time
 	zoneUpdateTime time.Duration
 	zones          []string
+	debug          bool
 	dbConn         *sql.DB
 }
 
 // ServeDNS implements the plugin.Handler interface.
 func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	// 判断是否需要设置为debug模式
+	if handler.debug {
+		clog.D.Set()
+	}
 	clog.Debug("coredns-mysql: In ServeDNS method")
 	// 包装的一个对象，方便使用
 	state := request.Request{W: w, Req: r}

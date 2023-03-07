@@ -9,7 +9,6 @@ import (
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	clog "github.com/coredns/coredns/plugin/pkg/log"
 )
 
 const (
@@ -19,6 +18,7 @@ const (
 	defaultMaxOpenConnections = 10
 	defaultMaxIdleConnections = 10
 	defaultZoneUpdateTime     = 1 * time.Minute
+	defaultDebug              = false
 )
 
 func init() {
@@ -50,6 +50,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 		MaxOpenConnections: defaultMaxOpenConnections,
 		MaxIdleConnections: defaultMaxIdleConnections,
 		Ttl:                defaultTtl,
+		debug:              defaultDebug,
 	}
 	var err error
 
@@ -127,7 +128,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 					val = false
 				}
 				if val {
-					clog.D.Set()
+					mysql.debug = true
 				}
 			default:
 				if c.Val() != "}" {
