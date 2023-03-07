@@ -158,13 +158,13 @@ example.org.:53 {
         denial 65535
     }
     mysql {
-        dsn root:xuhcmk123.@tcp(127.0.0.1:3306)/dns
+        dsn username:password.@tcp(127.0.0.1:3306)/db_name
         table_name coredns_records
         max_lifetime 360000000
         max_open_connections 8
         max_idle_connections 4
         zone_update_interval 60s
-        debug true
+        # debug true
     }
 }
 .:53 {
