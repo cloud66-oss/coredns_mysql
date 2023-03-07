@@ -106,11 +106,11 @@ INSERT INTO coredns_records (host, zone, type, data, ttl, priority) VALUES
 
 -- Insert CNAME record
 INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
-('www', 'snail2sky.live.', 'CNAME', 'web.snail2sky.live.', 240);
+('www', 'example.org.', 'CNAME', 'web.example.org.', 240);
 
 -- Insert A record
 INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
-('web', 'snail2sky.live.', 'A', '6.7.8.9', 60);
+('web', 'example.org.', 'A', '6.7.8.9', 60);
 
 -- Insert A record
 INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
@@ -149,6 +149,27 @@ dig ns1.example.org AAAA
 
 # query TXT record
 dig example.org TXT
+```
+
+```corefile
+example.org.:53 {
+    cache {
+        success 65535
+        denial 65535
+    }
+    mysql {
+        dsn root:xuhcmk123.@tcp(127.0.0.1:3306)/dns
+        table_name coredns_records
+        max_lifetime 360000000
+        max_open_connections 8
+        max_idle_connections 4
+        zone_update_interval 60s
+        debug true
+    }
+}
+.:53 {
+    forward . 8.8.8.8
+}
 ```
 
 ### Acknowledgements and Credits
