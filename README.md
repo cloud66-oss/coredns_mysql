@@ -150,7 +150,7 @@ dig ns1.example.org AAAA
 # query TXT record
 dig example.org TXT
 ```
-
+- Example Corefile
 ```corefile
 example.org.:53 {
     cache {
