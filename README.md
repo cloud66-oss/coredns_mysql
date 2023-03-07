@@ -158,7 +158,7 @@ example.org.:53 {
         denial 65535
     }
     mysql {
-        dsn username:password.@tcp(127.0.0.1:3306)/db_name
+        dsn username:password@tcp(127.0.0.1:3306)/db_name
         table_name coredns_records
         max_lifetime 360000000
         max_open_connections 8
