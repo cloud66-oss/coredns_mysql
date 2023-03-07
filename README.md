@@ -120,6 +120,10 @@ INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
 INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
 ('ns1', 'example.org.', 'AAAA', '2402:4e00:1020:1404:0:9227:71ab:2b74', 240);
 
+-- Insert A record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('@', 'example.org.', 'A', '5.6.7.8', 60);
+
 -- Insert TXT record
 INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
 ('@', 'example.org.', 'TXT', 'hello world!', 120);
