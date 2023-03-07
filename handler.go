@@ -2,10 +2,10 @@ package coredns_mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/coredns/coredns/plugin"
+	clog "github.com/coredns/coredns/plugin/pkg/log"
 	"github.com/coredns/coredns/request"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/miekg/dns"
@@ -29,6 +29,7 @@ type CoreDNSMySql struct {
 
 // ServeDNS implements the plugin.Handler interface.
 func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	clog.Debug("coredns-mysql: In ServeDNS method")
 	// 包装的一个对象，方便使用
 	state := request.Request{W: w, Req: r}
 
@@ -39,28 +40,32 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	// 不支持区域传送
 	if qType == RecordType.AXFR {
+		clog.Debug("coredns-mysql: AXFR type request not implemented")
 		return handler.errorResponse(state, dns.RcodeNotImplemented, nil)
 	}
 
 	// coredns-mysql插件会缓存所有的zone，以提高效率，会定时更新zone
 	if time.Since(handler.lastZoneUpdate) > handler.zoneUpdateTime {
-		fmt.Println("正在更新域", handler.zones)
+		clog.Debug("coredns-mysql: Update zones, current zones", handler.zones)
 		err := handler.loadZones()
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}
-		fmt.Println("更新域完成", handler.zones)
+		clog.Debug("coredns-mysql: Updated zones, current zones", handler.zones)
 	}
 
 	// 判断当前 qName 是否能匹配到合适的 zone ，最长匹配原则
 	qZone := plugin.Zones(handler.zones).Matches(qName)
+	clog.Debug("coredns-mysql: Use", qName, "match zones, matched zones is", qZone)
 
 	// 如果不能匹配，则转给下一个 coredns 插件
 	if qZone == "" {
+		clog.Debug("coredns-mysql: Not fount matched zone, retrun request to next plugin")
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
 
 	// 从数据库中查询该记录
+	clog.Debug("coredns-mysql: Use zone", qZone, "name", qName, "type", qType, "to query db")
 	records, err := handler.findRecord(qZone, qName, qType)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
@@ -69,6 +74,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// 如果未查到域名，则查询SOA记录
 	if len(records) == 0 {
 		// 查询SOA记录
+		clog.Debug("coredns-mysql: Not query any record, query SOA record")
 		records, err = handler.findRecord(qZone, "@", RecordType.SOA)
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
@@ -76,6 +82,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 
 	results, err := handler.resolveRecords(records)
+	clog.Debug("coredns-mysql: Query all results are", results)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
