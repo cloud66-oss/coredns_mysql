@@ -172,6 +172,10 @@ example.org.:53 {
     }
 }
 .:53 {
+    cache {
+        success 65535
+        denial 65535
+    }
     forward . 8.8.8.8
 }
 ```
