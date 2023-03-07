@@ -29,6 +29,7 @@ type CoreDNSMySql struct {
 
 // ServeDNS implements the plugin.Handler interface.
 func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	clog.D.Set()
 	clog.Debug("coredns-mysql: In ServeDNS method")
 	// 包装的一个对象，方便使用
 	state := request.Request{W: w, Req: r}
@@ -83,6 +84,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 
 	results, err := handler.resolveRecords(records)
 	clog.Debug("coredns-mysql: Query all results are", results)
+
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
