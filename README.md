@@ -101,8 +101,8 @@ INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
 
 -- Insert MX records
 INSERT INTO coredns_records (host, zone, type, data, ttl, priority) VALUES
-('@', 'svc.tiger.', 'MX', 'mx1.svc.tiger.', 3600, 10),
-('@', 'svc.tiger.', 'MX', 'mx2.svc.tiger.', 3600, 20);
+('@', 'example.org.', 'MX', 'mx1.svc.tiger.', 3600, 10),
+('@', 'example.org.', 'MX', 'mx2.svc.tiger.', 3600, 20);
 
 -- Insert CNAME record
 INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
