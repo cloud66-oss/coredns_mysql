@@ -57,37 +57,102 @@ Add any required modules to CoreDNS code as prompted.
 This plugin doesn't create or migrate database schema for its use yet. To create the database and tables, use the following table structure (note the table name prefix):
 
 ```sql
-CREATE TABLE `coredns_records` (
-    `id` INT NOT NULL AUTO_INCREMENT,
-	`zone` VARCHAR(255) NOT NULL,
-	`name` VARCHAR(255) NOT NULL,
-	`ttl` INT DEFAULT NULL,
-	`content` TEXT,
-	`record_type` VARCHAR(255) NOT NULL,
-	PRIMARY KEY (`id`)
-) ENGINE = INNODB AUTO_INCREMENT = 6 DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
+CREATE TABLE coredns_records (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  host varchar(128) NOT NULL,
+  zone varchar(512) NOT NULL,
+  type varchar(10) NOT NULL DEFAULT 'A',
+  data varchar(1024) DEFAULT '',
+  ttl int(8) DEFAULT 30,
+  
+  priority int(4) DEFAULT 0,
+  weight int(4) DEFAULT 1,
+  port int(5) DEFAULT 0,
+  target varchar(256) DEFAULT '',
+  flag int(2) DEFAULT 0,
+  tag varchar(64) DEFAULT '',
+
+  primary_ns varchar(100) DEFAULT '',
+  resp_person varchar(100) DEFAULT '',
+
+  serial int(11) DEFAULT 0,
+  refresh int(11) DEFAULT 0,
+  retry int(11) DEFAULT 0,
+  expire int(11) DEFAULT 0,
+  minimum int(11) DEFAULT 0,
+  
+  remark varchar(64) DEFAULT '',
+  
+  PRIMARY KEY (id)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 ```
 
 ## Record setup
 Each record served by this plugin, should belong to the zone it is allowed to server by CoreDNS. Here are some examples:
 
 ```sql
--- Insert batch #1
-INSERT INTO coredns_records (zone, name, ttl, content, record_type) VALUES
-('example.org.', 'foo', 30, '{"ip": "1.1.1.1"}', 'A'),
-('example.org.', 'foo', '60', '{"ip": "1.1.1.0"}', 'A'),
-('example.org.', 'foo', 30, '{"text": "hello"}', 'TXT'),
-('example.org.', 'foo', 30, '{"host" : "foo.example.org.","priority" : 10}', 'MX');
+-- Insert SOA record
+INSERT INTO coredns_records (host, zone, type, ttl, primary_ns, resp_person, serial, refresh, retry, expire, minimum) VALUES
+('@', 'example.org.', 'SOA', 86400, 'ns1.example.org.', 'root.example.org.', 1, 3600, 300, 86400, 300);
+
+-- Insert NS record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('@', 'example.org.', 'NS', 'ns1.example.org.', 3600);
+
+-- Insert MX records
+INSERT INTO coredns_records (host, zone, type, data, ttl, priority) VALUES
+('@', 'svc.tiger.', 'MX', 'mx1.svc.tiger.', 3600, 10),
+('@', 'svc.tiger.', 'MX', 'mx2.svc.tiger.', 3600, 20);
+
+-- Insert CNAME record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('www', 'snail2sky.live.', 'CNAME', 'web.snail2sky.live.', 240);
+
+-- Insert A record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('web', 'snail2sky.live.', 'A', '6.7.8.9', 60);
+
+-- Insert A record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('ns1', 'example.org.', 'A', '1.2.3.4', 120);
+
+-- Insert AAAA record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('ns1', 'example.org.', 'AAAA', '2402:4e00:1020:1404:0:9227:71ab:2b74', 240);
+
+-- Insert TXT record
+INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
+('@', 'example.org.', 'TXT', 'hello world!', 120);
+
 ```
 
 These can be queries using `dig` like this:
 
-```shell script
-$ dig A MX foo.example.org 
+```bash
+# query SOA record
+dig example.org SOA
+
+# query NS record
+dig example.org NS
+
+# query MX record
+dig example.org MX
+
+# query CNAME record
+dig www.snail2sky.live CNAME
+# or 
+dig www.snail2sky.live
+
+# query A and AAAA record
+dig ns1.example.org A
+dig ns1.example.org AAAA
+
+# query TXT record
+dig example.org TXT
 ```
 
 ### Acknowledgements and Credits
-This plugin, is inspired by https://github.com/wenerme/coredns-pdsql and https://github.com/arvancloud/redis
+This plugin, is inspired by https://github.com/cloud66-oss/coredns_mysql.git and https://github.com/wenerme/coredns-pdsql and https://github.com/arvancloud/redis
 
 ### Development 
 To develop this plugin further, make sure you can compile CoreDNS locally and get this repo (`go get github.com/snail2sky/coredns_mysql`). You can switch the CoreDNS mod file to look for the plugin code locally while you're developing it:
