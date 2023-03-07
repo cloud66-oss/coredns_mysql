@@ -9,6 +9,7 @@ import (
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
+	clog "github.com/coredns/coredns/plugin/pkg/log"
 )
 
 const (
@@ -116,6 +117,18 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 					val = defaultTtl
 				}
 				mysql.Ttl = uint32(val)
+			case "debug":
+				if !c.NextArg() {
+					return &CoreDNSMySql{}, c.ArgErr()
+				}
+				var val bool
+				val, err = strconv.ParseBool(c.Val())
+				if err != nil {
+					val = false
+				}
+				if val {
+					clog.D.Set()
+				}
 			default:
 				if c.Val() != "}" {
 					return &CoreDNSMySql{}, c.Errf("unknown property '%s'", c.Val())

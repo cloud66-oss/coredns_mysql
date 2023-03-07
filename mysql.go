@@ -35,28 +35,28 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 	// 以 host, zone, type 对DB进行查询，并且得到记录
 	records, err := handler.dbQuery(zone, query, qType)
 	if err != nil {
-		clog.Debug("coredns-mysql: DB query error", err)
+		clog.Debug("coredns-mysql: DB query error ", err)
 		return nil, err
 	}
-	clog.Debug("coredns-mysql: DB query records are", records)
+	clog.Debug("coredns-mysql: DB query records are ", records)
 
 	// 如果DB中没有该域名对应查询类型的记录，则尝试查询该域名的所有类型的记录
 	// 比如: 可能该域名本事其实是一个CNAME记录或者MX等等，
 	if len(records) == 0 {
-		clog.Debug("coredns-mysql: Query not have record, query type is", qType)
+		clog.Debug("coredns-mysql: Query not have record, query type is ", qType)
 		// 判断查询类型是否为 A 或 AAAA，如果是则对该域名的CNAME记录进行查询
 		switch qType {
 		case RecordType.A, RecordType.AAAA:
 			// 查询 CNAME 类型的记录，看是否存在
 			records, err = handler.dbQuery(zone, query, RecordType.CNAME)
-			clog.Debug("coredns-mysql: Query CNAME records are", records)
+			clog.Debug("coredns-mysql: Query CNAME records are ", records)
 			if err != nil {
-				clog.Debug("coredns-mysql: DB query error", err)
+				clog.Debug("coredns-mysql: DB query error ", err)
 				return nil, err
 			}
 			// 如果存在 CNAME 记录，则查询 CNAME 指向的域名的 A 或 AAAA 类型的记录
 			if len(records) != 0 {
-				clog.Debug("coredns-mysql: Recursive call findrecord method", records)
+				clog.Debug("coredns-mysql: Recursive call findrecord method ", records)
 				for _, record := range records {
 					recordsIP, err := handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
 					if err != nil {

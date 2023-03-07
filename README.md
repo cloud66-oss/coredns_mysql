@@ -19,6 +19,7 @@ mysql {
     [max_idle_connections MAX_IDLE_CONNECTIONS]
     [ttl DEFAULT_TTL]
     [zone_update_interval ZONE_UPDATE_INTERVAL]
+    [debug true|false]
 }
 ```
 
@@ -29,6 +30,7 @@ mysql {
 - `max_idle_connections` Maximum number of idle connections in the database connection pool. Default is 10.
 - `ttl` Default TTL for records without a specified TTL in seconds. Default is 360 (seconds)
 - `zone_update_interval` Maximum time interval between loading all the zones from the database. Default is 1 minutes.
+- `debug` Open coredns-mysql debug model. default false.
 
 ## Supported Record Types
 
