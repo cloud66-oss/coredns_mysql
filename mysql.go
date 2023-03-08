@@ -6,7 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coredns/coredns/plugin"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/miekg/dns"
 )
 
 func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error) {
@@ -25,18 +28,25 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 	return records, nil
 }
 
-func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, error) {
-	// 处理确定查询的是域本身？亦或是域名
+func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) ([]*Record, int, error) {
+	// 如果不能匹配，则转给下一个 coredns 插件
+	if zone == "" {
+		clog.Debug("coredns-mysql: Not fount matched zone, retrun request to next plugin")
+		// code, err := plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
+		return nil, RcodeNextPlugin, nil
+	}
 
+	// 处理确定查询的是域本身？亦或是域名
 	query := "@"
 	if name != zone {
 		query = strings.TrimSuffix(name, "."+zone)
 	}
-	// 以 host, zone, type 对DB进行查询，并且得到记录
+	// 从数据库中查询该记录
+	clog.Debug("coredns-mysql: Use zone ", zone, " name ", name, " type ", qType, " to query db ")
 	records, err := handler.dbQuery(zone, query, qType)
 	if err != nil {
 		clog.Debug("coredns-mysql: DB query error ", err)
-		return nil, err
+		return nil, dns.RcodeServerFailure, err
 	}
 	clog.Debug("coredns-mysql: DB query records are ", records)
 
@@ -52,15 +62,16 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 			clog.Debug("coredns-mysql: Query CNAME records are ", records)
 			if err != nil {
 				clog.Debug("coredns-mysql: DB query error ", err)
-				return nil, err
+				return nil, dns.RcodeServerFailure, err
 			}
 			// 如果存在 CNAME 记录，则查询 CNAME 指向的域名的 A 或 AAAA 类型的记录
 			if len(records) != 0 {
 				clog.Debug("coredns-mysql: Recursive call findrecord method ", records)
 				for _, record := range records {
-					recordsIP, err := handler.findRecord(strings.Join(strings.Split(record.Data, ".")[1:], "."), record.Data, qType)
+					qZone := plugin.Zones(handler.zones).Matches(record.Data)
+					recordsIP, _, err := handler.findRecord(qZone, record.Data, qType)
 					if err != nil {
-						return nil, err
+						return nil, 0, err
 					}
 					records = append(records, recordsIP...)
 				}
@@ -68,7 +79,7 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 		}
 	}
 
-	return records, nil
+	return records, 0, nil
 }
 
 func (handler *CoreDNSMySql) loadZones() error {

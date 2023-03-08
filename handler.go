@@ -62,16 +62,11 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// 判断当前 qName 是否能匹配到合适的 zone ，最长匹配原则
 	qZone := plugin.Zones(handler.zones).Matches(qName)
 	clog.Debug("coredns-mysql: Use ", qName, "match zones, matched zones is ", qZone)
-
-	// 如果不能匹配，则转给下一个 coredns 插件
-	if qZone == "" {
-		clog.Debug("coredns-mysql: Not fount matched zone, retrun request to next plugin")
+	// 记录查询
+	records, code, err := handler.findRecord(qZone, qName, qType)
+	if code == RcodeNextPlugin {
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
-
-	// 从数据库中查询该记录
-	clog.Debug("coredns-mysql: Use zone ", qZone, " name ", qName, " type ", qType, " to query db ")
-	records, err := handler.findRecord(qZone, qName, qType)
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
@@ -80,7 +75,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	if len(records) == 0 {
 		// 查询SOA记录
 		clog.Debug("coredns-mysql: Not query any record, query SOA record")
-		records, err = handler.findRecord(qZone, "@", RecordType.SOA)
+		records, _, err = handler.findRecord(qZone, "@", RecordType.SOA)
 		if err != nil {
 			return handler.errorResponse(state, dns.RcodeServerFailure, err)
 		}

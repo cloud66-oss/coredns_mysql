@@ -19,6 +19,8 @@ const (
 	defaultMaxIdleConnections = 10
 	defaultZoneUpdateTime     = 1 * time.Minute
 	defaultDebug              = false
+
+	RcodeNextPlugin = 100
 )
 
 func init() {
