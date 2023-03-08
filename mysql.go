@@ -69,7 +69,10 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, qType string) 
 				clog.Debug("coredns-mysql: Recursive call findrecord method ", records)
 				for _, record := range records {
 					qZone := plugin.Zones(handler.zones).Matches(record.Data)
-					recordsIP, _, err := handler.findRecord(qZone, record.Data, qType)
+					recordsIP, code, err := handler.findRecord(qZone, record.Data, qType)
+					if code == RcodeNextPlugin {
+						return records, code, err
+					}
 					if err != nil {
 						return nil, 0, err
 					}

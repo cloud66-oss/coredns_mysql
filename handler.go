@@ -64,9 +64,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	clog.Debug("coredns-mysql: Use ", qName, "match zones, matched zones is ", qZone)
 	// 记录查询
 	records, code, err := handler.findRecord(qZone, qName, qType)
-	if code == RcodeNextPlugin {
-		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
-	}
+
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
@@ -112,6 +110,11 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	state.SizeAndDo(m)
 	m = state.Scrub(m)
 	w.WriteMsg(m)
+
+	if code == RcodeNextPlugin {
+		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
+	}
+
 	return dns.RcodeSuccess, nil
 }
 
