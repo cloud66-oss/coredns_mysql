@@ -132,16 +132,21 @@ func (handler *CoreDNSMySql) getRecordsFromQueryResults(results *sql.Rows) (reco
 		rMinimum    uint32
 
 		remark string
+		online uint32
 	)
 	for results.Next() {
 		err = results.Scan(
 			&rHost, &rZone, &rType, &rData, &rTTL,
 			&rPriority, &rWeight, &rPort, &rTarget, &rFlag, &rTag,
 			&rPrimaryNS, &rRespPerson, &rSerial, &rRefresh, &rRetry, &rExpire, &rMinimum,
-			&remark,
+			&remark, &online,
 		)
 		if err != nil {
 			return
+		}
+		if online == 0 {
+			clog.Debug("coredns-mysql: ", rData, " ", rType, " not online, ignore it")
+			continue
 		}
 
 		record := &Record{
