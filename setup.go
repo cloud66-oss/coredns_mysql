@@ -16,7 +16,7 @@ const (
 	defaultTtl                = 360
 	defaultMaxLifeTime        = 24 * time.Hour
 	defaultMaxOpenConnections = 10
-	defaultMaxIdleConnections = 10
+	defaultMaxIdleConnections = 5
 	defaultZoneUpdateTime     = 1 * time.Minute
 	defaultDebug              = false
 
@@ -52,6 +52,7 @@ func mysqlParse(c *caddy.Controller) (*CoreDNSMySql, error) {
 		MaxOpenConnections: defaultMaxOpenConnections,
 		MaxIdleConnections: defaultMaxIdleConnections,
 		Ttl:                defaultTtl,
+		zoneUpdateTime:     defaultZoneUpdateTime,
 		debug:              defaultDebug,
 	}
 	var err error

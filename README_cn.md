@@ -1,15 +1,16 @@
 # MySQL
 
-MySQL backend for CoreDNS
+使用mysql作为coredns的后端
 
-English | [中文](./README_cn.md)
+[English](./README.md) | 中文
 
 ## Name
 mysql - MySQL backend for CoreDNS
 
 ## Description
 
-This plugin uses MySQL as a backend to store DNS records. These will then can served by CoreDNS. The backend uses a simple, single table data structure that can be shared by other systems to add and remove records from the DNS server. As there is no state stored in the plugin, the service can be scaled out by spinning multiple instances of CoreDNS backed by the same database.
+该插件使用MySQL作为存储DNS记录的后端，数据库存储的数据可以为coredns提供服务。后端使用简单的单个表数据结构，可以由其他系统共享，从DNS服务器添加和删除记录。由于插件中没有存储的状态，因此可以通过调整数据库连接的个数来实现性能的扩缩容。
+
 
 ## Syntax
 ```
@@ -25,28 +26,28 @@ mysql {
 }
 ```
 
-- `dsn` DSN for MySQL as per https://github.com/go-sql-driver/mysql examples. You can use `$ENV_NAME` format in the DSN, and it will be replaced with the environment variable value.
-- `table_name` MySQL table name. Defaults to `coredns_records`.
-- `max_lifetime` Duration (in Golang format) for a SQL connection. Default is 24 hours.
-- `max_open_connections` Maximum number of open connections to the database server. Default is 10.
-- `max_idle_connections` Maximum number of idle connections in the database connection pool. Default is 5.
-- `ttl` Default TTL for records without a specified TTL in seconds. Default is 360 (seconds)
-- `zone_update_interval` Maximum time interval between loading all the zones from the database. Default is 1 minutes.
-- `debug` Open coredns-mysql debug model. default false.
+- `dsn` 根据 https://github.com/go-sql-driver/mysql 示例，用于mySQL的DSN。您可以在DSN中使用`$ ENV_NAME`格式，并将其替换为环境变量值。
+- `table_name` MySQL 表名. 默认值为 `coredns_records`.
+- `max_lifetime` mysql连接池的最大时长(golang的时间格式字符串，如 `3600s`). 默认为 `24h`.
+- `max_open_connections` 与DB建立最大连接的个数. 默认为 `10`.
+- `max_idle_connections` DB连接池中最大空闲连接个数.  默认为 `5`.
+- `ttl` 如果记录没有设置TTL，则使用此值. 默认值为 `360s`.
+- `zone_update_interval` 从数据库加载所有域的最大时间间隔，此选项用于提升性能. 默认值为 `1m`.
+- `debug` coredns-mysql插件本身的调试功能,可以在关键步骤打印一些debug日志. 默认值为 `false`.
 
 ## Supported Record Types
 
-A, AAAA, CNAME, SOA, TXT, NS, MX, CAA and SRV.  Wildcard records are supported as well.  This backend doesn't support AXFR requests.
+A，AAAA，CNAME，SOA，TXT，NS，MX，CAA和SRV。~~也支持通配符记录~~。此后端不支持AXFR请求。
 
 ## Setup (as an external plugin)
 
-Add this as an external plugin in `plugin.cfg` file: 
+将其添加到 `plugin.cfg` 中：
 
 ```
 mysql:github.com/snail2sky/coredns_mysql
 ```
 
-then run
+运行
  
 ```shell script
 go generate
@@ -54,10 +55,10 @@ go get
 go build
 ```
 
-Add any required modules to CoreDNS code as prompted.
+按照提示，将任何必需的模块添加到Coredns代码中
 
 ## Database Setup
-This plugin doesn't create or migrate database schema for its use yet. To create the database and tables, use the following table structure (note the table name prefix):
+该插件尚未创建或迁移数据库架构以供其使用。要创建数据库和表，请使用下表结构（请注意表名跟配置文件相对应）：
 
 ```sql
 CREATE TABLE coredns_records (
@@ -92,7 +93,7 @@ CREATE TABLE coredns_records (
 ```
 
 ## Record setup
-Each record served by this plugin, should belong to the zone it is allowed to server by CoreDNS. Here are some examples:
+该插件提供的每个记录都应属于核心允许使用的区域。这里有些例子：
 
 ```sql
 -- Insert SOA record
@@ -134,7 +135,7 @@ INSERT INTO coredns_records (host, zone, type, data, ttl) VALUES
 
 ```
 
-These can be queries using `dig` like this:
+可以使用 dig 命令进行查询：
 
 ```bash
 # query SOA record
@@ -158,7 +159,7 @@ dig ns1.example.org AAAA
 # query TXT record
 dig example.org TXT
 ```
-- Example Corefile
+- 示例Corefile配置文件
 ```corefile
 example.org.:53 {
     mysql {
@@ -177,12 +178,13 @@ example.org.:53 {
 ```
 
 ### Acknowledgements and Credits
-This plugin, is inspired by https://github.com/cloud66-oss/coredns_mysql.git and https://github.com/wenerme/coredns-pdsql and https://github.com/arvancloud/redis
+该插件fork于 https://github.com/cloud66-oss/coredns_mysql.git ,感谢 https://github.com/wenerme/coredns-pdsql 和 https://github.com/arvancloud/redis 灵感
 
 ### Development 
-To develop this plugin further, make sure you can compile CoreDNS locally and get this repo (`go get github.com/snail2sky/coredns_mysql`). You can switch the CoreDNS mod file to look for the plugin code locally while you're developing it:
+要进一步开发此插件，请确保您可以在本地编译Coredns并获取此存储库（`go get github.com/snail2sky/coredns_mysql`）。您可以在开发该文件时切换 coredns mod文件以在本地查找插件代码：
 
-Put `replace github.com/snail2sky/coredns_mysql => LOCAL_PATH_TO_THE_SOURCE_CODE` at the end of the `go.mod` file in CoreDNS code. 
+在coredns代码中的 `go.mod` 文件的末尾追加 `replace github.com/snail2sky/coredns_mysql => LOCAL_PATH_TO_THE_SOURCE_CODE`
 
-Pull requests and bug reports are welcome!
+欢迎大家提PR和ISSUES~
+再次感谢
 
