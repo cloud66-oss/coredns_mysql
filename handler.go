@@ -66,6 +66,7 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	records, code, err := handler.findRecord(qZone, qName, qType)
 	// 将请求交给下一个插件
 	if code == RcodeNextPlugin {
+		r.Question[0].Name = records[0].Data
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
 	if err != nil {
