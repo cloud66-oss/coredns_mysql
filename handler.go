@@ -64,7 +64,10 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	clog.Debug("coredns-mysql: Use ", qName, "match zones, matched zones is ", qZone)
 	// 记录查询
 	records, code, err := handler.findRecord(qZone, qName, qType)
-
+	// 将请求交给下一个插件
+	if code == RcodeNextPlugin {
+		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
+	}
 	if err != nil {
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
@@ -95,13 +98,6 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// 该结果用与响应 r 这个请求
 	m.SetReply(r)
 
-	// 将请求交给下一个插件
-	if code == RcodeNextPlugin {
-		m.Authoritative = false
-		m.RecursionAvailable = true
-		w.WriteMsg(m)
-		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
-	}
 	// 设置为权威答案
 	m.Authoritative = true
 	// 允许递归查询
