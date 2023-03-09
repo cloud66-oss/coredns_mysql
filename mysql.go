@@ -16,7 +16,7 @@ func (handler *CoreDNSMySql) dbQuery(zone, host, qType string) ([]*Record, error
 	sql := fmt.Sprintf("SELECT host, zone, type, data, ttl, "+
 		"priority, weight, port, target, flag, tag, "+
 		"primary_ns, resp_person, serial, refresh, retry, expire, minimum, "+
-		"remark	FROM %s WHERE zone = ? AND host = ? AND type = ?", handler.TableName)
+		"remark, online	FROM %s WHERE zone = ? AND host = ? AND type = ?", handler.TableName)
 	results, err := handler.dbConn.Query(sql, zone, host, qType)
 	if err != nil {
 		return nil, err
