@@ -67,7 +67,9 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	// 将请求交给下一个插件
 	if code == RcodeNextPlugin {
 		clog.Debug(records, records[0].Data)
+		clog.Debug(r.Question)
 		r.Question[0].Name = records[0].Data
+		clog.Debug(r.Question)
 		return plugin.NextOrFailure(handler.Name(), handler.Next, ctx, w, r)
 	}
 	if err != nil {
