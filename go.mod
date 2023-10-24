@@ -1,4 +1,4 @@
-module github.com/cloud66-oss/coredns_mysql
+module github.com/chris-edwards-pub/coredns_mysql
 
 go 1.16
 
@@ -9,3 +9,4 @@ require (
 	github.com/miekg/dns v1.1.42
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 )
+git add
