@@ -10,4 +10,4 @@ require (
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 )
 
-replace github.com/cloud66-oss/coredns_mysql => github.com/chris-edwards-pub/coredns_mysql latest
+replace github.com/cloud66-oss/coredns_mysql => github.com/chris-edwards-pub/coredns_mysql v0.0.0-20231024194951-406250e1ae93
