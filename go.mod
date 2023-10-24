@@ -9,5 +9,3 @@ require (
 	github.com/miekg/dns v1.1.42
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 )
-
-replace github.com/cloud66-oss/coredns_mysql => github.com/chris-edwards-pub/coredns_mysql latest
