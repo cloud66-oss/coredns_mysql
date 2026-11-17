@@ -57,6 +57,47 @@ func (handler *CoreDNSMySql) findRecord(zone string, name string, types ...strin
 	return records, nil
 }
 
+func (handler *CoreDNSMySql) findCNAMEChain(zone string, name string, types ...string) ([]*Record, error) {
+	records := make([]*Record, 0)
+	seen := make(map[string]bool)
+
+	for len(seen) < maxCNAMEChain {
+		key := strings.ToLower(dns.Fqdn(name))
+		if seen[key] {
+			break
+		}
+		seen[key] = true
+
+		cnames, err := handler.findRecord(zone, name, "CNAME")
+		if err != nil {
+			return nil, err
+		}
+		if len(cnames) == 0 {
+			break
+		}
+		records = append(records, cnames[0])
+
+		target, err := cnames[0].cnameTarget()
+		if err != nil {
+			return nil, err
+		}
+		if target == "" || !dns.IsSubDomain(zone, target) {
+			break
+		}
+
+		found, err := handler.findRecord(zone, target, types...)
+		if err != nil {
+			return nil, err
+		}
+		if len(found) > 0 {
+			return append(records, found...), nil
+		}
+		name = target
+	}
+
+	return records, nil
+}
+
 // findWildcardRecords attempts to find wildcard records
 // recursively until it finds matching records.
 // e.g. x.y.z -> *.y.z -> *.z -> *

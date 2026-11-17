@@ -151,6 +151,18 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 	return r, nil, nil
 }
 
+func (rec *Record) cnameTarget() (string, error) {
+	var aRec *CNAMERecord
+	err := json.Unmarshal([]byte(rec.Content), &aRec)
+	if err != nil {
+		return "", err
+	}
+	if aRec == nil || len(aRec.Host) == 0 {
+		return "", nil
+	}
+	return dns.Fqdn(aRec.Host), nil
+}
+
 func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
 	r := new(dns.NS)
 	r.Hdr = dns.RR_Header{

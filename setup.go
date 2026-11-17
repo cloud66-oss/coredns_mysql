@@ -17,6 +17,7 @@ const (
 	defaultMaxOpenConnections = 10
 	defaultMaxIdleConnections = 10
 	defaultZoneUpdateTime     = 10 * time.Minute
+	maxCNAMEChain             = 8
 )
 
 func init() {

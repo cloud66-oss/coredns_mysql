@@ -49,6 +49,13 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		return handler.errorResponse(state, dns.RcodeServerFailure, err)
 	}
 
+	if len(records) == 0 && qType != "CNAME" {
+		records, err = handler.findCNAMEChain(qZone, qName, qType)
+		if err != nil {
+			return handler.errorResponse(state, dns.RcodeServerFailure, err)
+		}
+	}
+
 	var recordNotFound bool
 	if len(records) == 0 {
 		recordNotFound = true
