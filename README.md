@@ -38,6 +38,13 @@ When a name has a CNAME record and no record of the requested type, the CNAME is
 
 A query for a name that exists, but has no record of the requested type, is answered with NOERROR and the zone SOA (NODATA). NXDOMAIN is returned only when neither the name, a name below it, nor a matching wildcard exists.
 
+The SOA record content takes the fields `ns`, `MBox`, `refresh`, `retry`, `expire`, `minttl` and an optional `serial`. Without `serial`, the current Unix time is used, so the serial changes on every query and differs between instances:
+
+```sql
+INSERT INTO coredns_records (zone, name, ttl, content, record_type) VALUES
+('example.org.', '', 300, '{"ns": "ns1.example.org.", "MBox": "hostmaster.example.org.", "refresh": 3600, "retry": 600, "expire": 604800, "minttl": 300, "serial": 2024010101}', 'SOA');
+```
+
 ## Setup (as an external plugin)
 
 Add this as an external plugin in `plugin.cfg` file: 

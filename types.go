@@ -57,6 +57,7 @@ type SOARecord struct {
 	Retry   uint32 `json:"retry"`
 	Expire  uint32 `json:"expire"`
 	MinTtl  uint32 `json:"minttl"`
+	Serial  uint32 `json:"serial"`
 }
 
 type CAARecord struct {
@@ -278,6 +279,9 @@ func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
 		r.Minttl = aRec.MinTtl
 	}
 	r.Serial = rec.serial()
+	if aRec.Serial != 0 {
+		r.Serial = aRec.Serial
+	}
 
 	return r, nil, nil
 }
