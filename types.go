@@ -57,6 +57,7 @@ type SOARecord struct {
 	Retry   uint32 `json:"retry"`
 	Expire  uint32 `json:"expire"`
 	MinTtl  uint32 `json:"minttl"`
+	Serial  uint32 `json:"serial"`
 }
 
 type CAARecord struct {
@@ -149,6 +150,18 @@ func (rec *Record) AsCNAMERecord() (record dns.RR, extras []dns.RR, err error) {
 	}
 	r.Target = dns.Fqdn(aRec.Host)
 	return r, nil, nil
+}
+
+func (rec *Record) cnameTarget() (string, error) {
+	var aRec *CNAMERecord
+	err := json.Unmarshal([]byte(rec.Content), &aRec)
+	if err != nil {
+		return "", err
+	}
+	if aRec == nil || len(aRec.Host) == 0 {
+		return "", nil
+	}
+	return dns.Fqdn(aRec.Host), nil
 }
 
 func (rec *Record) AsNSRecord() (record dns.RR, extras []dns.RR, err error) {
@@ -266,6 +279,9 @@ func (rec *Record) AsSOARecord() (record dns.RR, extras []dns.RR, err error) {
 		r.Minttl = aRec.MinTtl
 	}
 	r.Serial = rec.serial()
+	if aRec.Serial != 0 {
+		r.Serial = aRec.Serial
+	}
 
 	return r, nil, nil
 }
