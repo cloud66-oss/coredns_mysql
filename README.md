@@ -36,6 +36,8 @@ A, AAAA, CNAME, SOA, TXT, NS, MX, CAA and SRV.  Wildcard records are supported a
 
 When a name has a CNAME record and no record of the requested type, the CNAME is returned and followed while its target is in the same zone, so the records of the target are included in the answer.
 
+A query for a name that exists, but has no record of the requested type, is answered with NOERROR and the zone SOA (NODATA). NXDOMAIN is returned only when neither the name, a name below it, nor a matching wildcard exists.
+
 ## Setup (as an external plugin)
 
 Add this as an external plugin in `plugin.cfg` file: 

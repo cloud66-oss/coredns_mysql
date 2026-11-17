@@ -57,8 +57,13 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 	}
 
 	var recordNotFound bool
+	nameExists := true
 	if len(records) == 0 {
 		recordNotFound = true
+		nameExists, err = handler.nameExists(qZone, qName)
+		if err != nil {
+			return handler.errorResponse(state, dns.RcodeServerFailure, err)
+		}
 		// no record found but we are going to return a SOA
 		recs, err := handler.findRecord(qZone, "", "SOA")
 		if err != nil {
@@ -125,7 +130,9 @@ func (handler *CoreDNSMySql) ServeDNS(ctx context.Context, w dns.ResponseWriter,
 		m.Answer = append(m.Answer, answers...)
 	} else {
 		m.Ns = append(m.Ns, answers...)
-		m.Rcode = dns.RcodeNameError
+		if !nameExists {
+			m.Rcode = dns.RcodeNameError
+		}
 	}
 	m.Extra = append(m.Extra, extras...)
 

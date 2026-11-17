@@ -122,6 +122,42 @@ func (handler *CoreDNSMySql) findWildcardRecords(zone string, name string, types
 	return handler.findRecord(zone, target, types...)
 }
 
+func (handler *CoreDNSMySql) nameExists(zone string, name string) (bool, error) {
+	if strings.EqualFold(dns.Fqdn(name), dns.Fqdn(zone)) {
+		return true, nil
+	}
+
+	db, err := handler.db()
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+
+	relative := strings.TrimSuffix(name, "."+zone)
+	candidates := []interface{}{zone, relative, "%." + escapeLike(relative)}
+	placeholders := make([]string, 0)
+	labels := dns.SplitDomainName(relative)
+	for i := 1; i <= len(labels); i++ {
+		placeholders = append(placeholders, "?")
+		candidates = append(candidates, strings.Join(append([]string{"*"}, labels[i:]...), "."))
+	}
+
+	sqlQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE zone = ? AND (name = ? OR name LIKE ? OR name IN (%s))",
+		handler.tableName,
+		strings.Join(placeholders, ","))
+	var count int
+	err = db.QueryRow(sqlQuery, candidates...).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func escapeLike(s string) string {
+	return strings.NewReplacer("\\", "\\\\", "%", "\\%", "_", "\\_").Replace(s)
+}
+
 func (handler *CoreDNSMySql) loadZones() error {
 	db, err := handler.db()
 	if err != nil {
